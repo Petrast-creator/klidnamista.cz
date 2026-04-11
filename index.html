@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="cs" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Naše klidná místa</title>
+  <meta name="description" content="Čtyři útulné apartmány v srdci české přírody — Lipno, Šumava a Třebichovice. Přímá rezervace bez poplatků." />
+  <meta property="og:title" content="Naše klidná místa" />
+  <meta property="og:description" content="Útulné apartmány na Lipně, Šumavě a u Prahy. Přímá rezervace." />
+  <meta property="og:image" content="images/hero_photo.jpg" />
+  <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo" aria-label="Domů">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+          <path d="M18 4L4 14v18h10v-9h8v9h10V14L18 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/>
+          <circle cx="18" cy="10" r="2.5" fill="currentColor"/>
+          <path d="M13 22.5c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        </svg>
+        <span class="logo-text">Naše klidná místa</span>
+      </a>
+      <nav class="nav" aria-label="Hlavní navigace">
+        <a href="lipno.html">Lipno</a>
+        <a href="srni.html">Srní</a>
+        <a href="trebichovice.html">Třebichovice</a>
+        <a href="#kontakt">Kontakt</a>
+      </nav>
+      <div class="header-actions">
+        <button class="theme-toggle" data-theme-toggle aria-label="Přepnout tmavý režim">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-image">
+      <img src="images/hero_photo.jpg" alt="Ranní východ slunce nad šumavskou loukou s mlhou a lesy" />
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Přímá rezervace · bez poplatků</p>
+      <h1 class="hero-heading">Útulná místa<br>v srdci přírody</h1>
+      <p class="hero-sub">Čtyři apartmány — u Lipna, na Šumavě v Srní a v Třebichovicích u Slaného. Vybavené s péčí o každý detail, aby se vám dobře odpočívalo.</p>
+      <a href="#apartmany" class="btn btn-primary">Prohlédnout apartmány</a>
+    </div>
+    <div class="hero-scroll-hint" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+  </section>
+
+  <!-- INTRO STRIP -->
+  <section class="intro-strip">
+    <div class="container">
+      <div class="intro-items">
+        <div class="intro-item">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <div><strong>4 apartmány</strong><span>Lipno · Šumava · Třebichovice</span></div>
+        </div>
+        <div class="intro-item">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div><strong>Přímá rezervace</strong><span>Bez poplatků platformy</span></div>
+        </div>
+        <div class="intro-item">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <div><strong>Hodnocení 5.0 ★</strong><span>Oblíbené u hostů na Airbnb</span></div>
+        </div>
+        <div class="intro-item">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          <div><strong>Osobní přístup</strong><span>Rychlá reakce na vaše dotazy</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APARTMENTS OVERVIEW -->
+  <section id="apartmany" class="overview-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Naše apartmány</h2>
+        <p>Každé místo má svůj charakter — vyberte si to, které vás osloví.</p>
+      </div>
+      <div class="overview-grid">
+
+        <!-- LIPNO -->
+        <a href="lipno.html" class="overview-card">
+          <div class="overview-card-image">
+            <img src="images/lipno/lipno_01.jpg" alt="Apartmán pro cyklisty na Lipně" loading="lazy" />
+            <div class="overview-card-region">Lipno · Hůrka</div>
+          </div>
+          <div class="overview-card-body">
+            <p class="overview-card-area">Jihočeský kraj</p>
+            <h3>Váš prostor pro aktivní dny a klidné večery</h3>
+            <p>Moderní apartmán v dřevostavbě u Lipna pro 6 hostů, který nabízí perfektní zázemí pro cyklisty, milovníky pěší turistiky a vodních sportů</p>
+            <div class="overview-card-meta">
+              <span>6 hostů</span>
+              <span>3 ložnice</span>
+              <span>2 koupelny</span>
+            </div>
+            <span class="overview-card-link">Více informací →</span>
+          </div>
+        </a>
+
+        <!-- SRNÍ -->
+        <a href="srni.html" class="overview-card">
+          <div class="overview-card-image">
+            <img src="images/srni_home.jpg" alt="Rodinný apartmán na samotě u lesa – Srní" loading="lazy" />
+            <div class="overview-card-region">Šumava · Srní</div>
+          </div>
+          <div class="overview-card-body">
+            <p class="overview-card-area">Plzeňský kraj · NP Šumava</p>
+            <h3>Rodinný apartmán na samotě u lesa</h3>
+            <p>Naše vlastní rodinné místo v tichu šumavských lesů. Ideální zázemí pro rodiny a milovníky přírody.</p>
+            <div class="overview-card-meta">
+              <span>6 hostů</span>
+              <span>2 ložnice</span>
+              <span>1,5 koupelny</span>
+            </div>
+            <span class="overview-card-link">Více informací →</span>
+          </div>
+        </a>
+
+        <!-- TŘEBICHOVICE -->
+        <a href="trebichovice.html" class="overview-card overview-card-wide">
+          <div class="overview-card-image">
+            <img src="images/liska/liska_08.jpg" alt="Chalupa pod jasany – Třebichovice" loading="lazy" />
+            <div class="overview-card-region">Třebichovice · 30 min od Prahy</div>
+          </div>
+          <div class="overview-card-body">
+            <p class="overview-card-area">Středočeský kraj</p>
+            <h3>Chalupa pod jasany — dva apartmány</h3>
+            <p>Dva podkrovní apartmány v naší rodinné chalupě na okraji lesa, se soukromou terasou a výhledem na les</p>
+            <div class="overview-card-meta">
+              <span>Apartmán Liška — 4 hosté</span>
+              <span>Apartmán Jelen — 4+ hostů</span>
+            </div>
+            <span class="overview-card-link">Více informací →</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- HOST SECTION -->
+  <section class="host-section">
+    <div class="container">
+      <div class="host-grid">
+        <div class="host-text">
+          <p class="apt-region">Vaše hostitelka</p>
+          <p>Jmenuji se Petra a jsem milovnice přírody, pohybu a tvoření.</p>
+          <p>O pronájem našich čtyř rodinných apartmánů se starám osobně – takže budete vždy mluvit přímo se mnou. Těší mě hostit lidi, kteří mají rádi klid, přírodu a aktivní odpočinek – a budu ráda, když se u nás budete cítit jako doma.</p>
+          <div class="host-stats">
+            <div class="host-stat"><strong>5,0 ★</strong><span>Průměrné hodnocení</span></div>
+            <div class="host-stat"><strong>30+</strong><span>Hodnocení celkem</span></div>
+            <div class="host-stat"><strong>100%</strong><span>Rychlost odpovědi</span></div>
+            <div class="host-stat"><strong>5 let</strong><span>Hostitelkou</span></div>
+          </div>
+        </div>
+        <div class="host-image-col">
+          <div class="host-photo-card">
+            <img src="images/petra.jpg" alt="Hostitelka" loading="lazy">
+          </div>
+          <div class="host-badges">
+            <div class="host-badge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Ověřená identita
+            </div>
+            <div class="host-badge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+              Oblíbené u hostů
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KONTAKT -->
+  <section id="kontakt" class="contact-section">
+    <div class="container">
+      <div class="contact-inner">
+        <div class="contact-text">
+          <h2>Rezervujte přímo</h2>
+          <p>Napište mi e-mailem a domluvíme vše osobně — bez poplatků platformy, s individuální péčí.</p>
+          <div class="contact-methods">
+            <p style="font-weight:600; margin:0 0 4px; font-size: var(--text-base);">Petra Stahlová</p>
+            <a href="mailto:pstahlova@gmail.com" class="contact-link">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              pstahlova@gmail.com
+            </a>
+          </div>
+          <p class="contact-note">Nebo rovnou rezervujte na Airbnb — pokud vám více vyhovuje rezervace přes platformu, na kterou jste zvyklí.</p>
+          <div class="airbnb-links">
+            <a href="https://www.airbnb.cz/h/apartmanprocyklisty" target="_blank" rel="noopener" class="airbnb-link">Apartmán Lipno →</a>
+            <a href="https://www.airbnb.cz/h/apartmanulesa" target="_blank" rel="noopener" class="airbnb-link">Apartmán Srní →</a>
+            <a href="https://www.airbnb.cz/h/liska" target="_blank" rel="noopener" class="airbnb-link">Třebichovice – apartmán Liška →</a>
+            <a href="https://www.airbnb.cz/h/jelen" target="_blank" rel="noopener" class="airbnb-link">Třebichovice – apartmán Jelen →</a>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <svg width="28" height="28" viewBox="0 0 36 36" fill="none"><path d="M18 4L4 14v18h10v-9h8v9h10V14L18 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><circle cx="18" cy="10" r="2.5" fill="currentColor"/></svg>
+          <span>Naše klidná místa</span>
+        </div>
+        <div class="footer-links">
+          <a href="lipno.html">Lipno</a>
+          <a href="srni.html">Srní</a>
+          <a href="trebichovice.html">Třebichovice</a>
+          <a href="#kontakt">Kontakt</a>
+        </div>
+        <p class="footer-copy">© 2026 Naše klidná místa · Třebichovice, Česká republika</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

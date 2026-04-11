@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="cs" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chalupa pod jasany – Liška &amp; Jelen | Třebichovice | Naše klidná místa</title>
+  <meta name="description" content="Dvě útulná podkrovní apartmá v chalupě u Třebichovic a Vinařické hory. Sdílená terasa, klid přírody, ideální pro rodiny i skupiny." />
+  <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Galerie ── */
+    .gallery-section { padding: var(--space-12) 0 var(--space-6); }
+
+    .gallery-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-bottom: var(--space-6);
+    }
+    .gallery-tab {
+      background: none;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-full);
+      padding: 6px 16px;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .gallery-tab:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .gallery-tab.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .gallery-grid .g-item {
+      aspect-ratio: 4/3;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      background: var(--color-surface-offset);
+      border-radius: var(--radius-md);
+    }
+    .gallery-grid .g-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .gallery-grid .g-item:hover img { transform: scale(1.05); }
+    .gallery-grid .g-item .g-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0);
+      transition: background 0.3s;
+    }
+    .gallery-grid .g-item:hover .g-overlay { background: rgba(0,0,0,0.12); }
+
+    /* ── Lightbox ── */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.92);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .lightbox.open { opacity: 1; pointer-events: all; }
+    .lightbox img {
+      max-width: 90vw; max-height: 88vh;
+      object-fit: contain;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+    }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 24px;
+      background: none; border: none; color: #fff;
+      font-size: 32px; cursor: pointer; line-height: 1;
+      opacity: 0.8; transition: opacity 0.2s;
+    }
+    .lightbox-close:hover { opacity: 1; }
+    .lightbox-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,0.12); border: none;
+      color: #fff; font-size: 28px; cursor: pointer;
+      padding: 12px 16px; border-radius: var(--radius-md);
+      transition: background 0.2s;
+    }
+    .lightbox-nav:hover { background: rgba(255,255,255,0.25); }
+    .lightbox-prev { left: 16px; }
+    .lightbox-next { right: 16px; }
+    .lightbox-counter {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.6); font-size: var(--text-sm);
+    }
+
+    /* ── Popis + sidebar layout ── */
+    .apt-detail-wrap {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: var(--space-12);
+      align-items: start;
+      padding: var(--space-10) 0 var(--space-16);
+    }
+    @media (max-width: 900px) {
+      .apt-detail-wrap { grid-template-columns: 1fr; }
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+      .apt-detail-wrap > div { order: 2; }
+      .apt-detail-wrap > aside { order: 1; }
+      .detail-sidebar-card {
+        border-radius: 0;
+        margin: 0 calc(-1 * var(--space-4));
+        border-left: none;
+        border-right: none;
+        padding: var(--space-5) var(--space-4);
+      }
+      .detail-sidebar-card h3 {
+        font-size: var(--text-lg);
+        margin-bottom: var(--space-4);
+      }
+      .detail-sidebar-rules {
+        font-size: var(--text-sm);
+        margin-top: var(--space-4);
+      }
+    }
+
+    /* Hero */
+    .detail-hero { height: 70vh; min-height: 460px; }
+
+    /* ── Dvojitá sidebar (Liška + Jelen) ── */
+    .two-apt-sidebars {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      position: sticky;
+      top: 88px;
+    }
+    /* Sidebar card přechod */
+    .detail-sidebar-card {
+      transition: opacity 0.25s;
+    }
+    .detail-sidebar-card.sidebar-hidden {
+      display: none;
+    }
+
+    /* ── Sekce apartmánů ── */
+    .apt-section {
+      padding-top: var(--space-12);
+      border-top: 2px solid var(--color-border);
+    }
+    .apt-section:first-of-type { border-top: none; padding-top: 0; }
+
+    .apt-section-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-5);
+    }
+    .apt-section-tag {
+      display: inline-block;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: var(--text-sm);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+    }
+    .apt-section-title {
+      font-family: var(--font-display);
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--color-text);
+      margin: 0;
+    }
+
+    /* Sdílená terasa highlight */
+    .shared-terrace-note {
+      background: var(--color-surface-offset);
+      border-left: 3px solid var(--color-primary);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: var(--space-4) var(--space-5);
+      margin: var(--space-8) 0;
+      font-size: var(--text-base);
+      color: var(--color-text-muted);
+    }
+    .shared-terrace-note strong {
+      color: var(--color-text);
+      display: block;
+      margin-bottom: 4px;
+      font-size: var(--text-base);
+    }
+
+    /* Skupinová rezervace box */
+    .group-box {
+      background: var(--color-surface-offset);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6) var(--space-7);
+      margin: var(--space-10) 0;
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-5);
+    }
+    .group-box-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .group-box-text h3 {
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--color-text);
+      margin: 0 0 var(--space-2);
+    }
+    .group-box-text p {
+      font-size: var(--text-base);
+      color: var(--color-text-muted);
+      margin: 0;
+    }
+
+    /* ── Kalendář dostupnosti ── */
+    .cal-section { padding: var(--space-10) 0 var(--space-6); }
+    .cal-outer {
+      display: grid;
+      grid-template-columns: 40px 1fr 1fr 40px;
+      gap: var(--space-4);
+      margin-top: var(--space-6);
+      align-items: center;
+    }
+    @media (max-width: 760px) {
+      .cal-outer { grid-template-columns: 32px 1fr 32px; }
+      .cal-outer .cal-month:last-of-type { display: none; }
+    }
+    @media (max-width: 480px) {
+      .cal-outer { grid-template-columns: 28px 1fr 28px; }
+    }
+    .cal-wrap { display: contents; }
+
+    .cal-month {
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .cal-month-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .cal-month-title {
+      font-family: var(--font-display);
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--color-text);
+    }
+    .cal-nav { display: none; }
+
+    .cal-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      cursor: pointer;
+      color: var(--color-text-muted);
+      font-size: 22px;
+      line-height: 1;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      flex-shrink: 0;
+      align-self: center;
+    }
+    .cal-arrow:hover { color: var(--color-primary); border-color: var(--color-primary); }
+    .cal-arrow:disabled { opacity: 0.25; cursor: default; }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 10px 12px 14px;
+      gap: 2px;
+    }
+    .cal-dow {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted);
+      padding-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .cal-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      height: 52px;
+      border-radius: var(--radius-sm);
+      cursor: default;
+      font-size: var(--text-sm);
+    }
+    .cal-day .day-num { font-weight: 500; line-height: 1; }
+    .cal-day .day-price {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--color-primary);
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .cal-day.empty { visibility: hidden; }
+    .cal-day.past { opacity: 0.3; }
+    .cal-day.available:hover { background: var(--color-surface-offset); }
+    .cal-day.occupied {
+      background: #dce4ec;
+      color: #8a9aaa;
+      text-decoration: line-through;
+    }
+    [data-theme="dark"] .cal-day.occupied { background: rgba(255,255,255,0.13); color: rgba(255,255,255,0.35); }
+    .cal-day.blocked {
+      background: repeating-linear-gradient(
+        45deg,
+        #e8edf2,
+        #e8edf2 4px,
+        #c8d2db 4px,
+        #c8d2db 7px
+      );
+      color: #8a9aaa;
+    }
+    [data-theme="dark"] .cal-day.blocked {
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.07),
+        rgba(255,255,255,0.07) 4px,
+        rgba(255,255,255,0.14) 4px,
+        rgba(255,255,255,0.14) 7px
+      );
+      color: rgba(255,255,255,0.35);
+    }
+    .cal-day.today {
+      outline: 2px solid var(--color-primary);
+      outline-offset: -2px;
+    }
+
+    .cal-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-4);
+      margin-top: var(--space-4);
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+    .cal-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .cal-legend-dot {
+      width: 14px; height: 14px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .cal-legend-dot.available { background: var(--color-surface-offset); border: 1.5px solid var(--color-border); }
+    .cal-legend-dot.occupied { background: #dce4ec; border: 1.5px solid #b0bec9; }
+    .cal-legend-dot.blocked {
+      background: repeating-linear-gradient(
+        45deg,
+        #e8edf2, #e8edf2 3px,
+        #c8d2db 3px, #c8d2db 6px
+      );
+      border: 1.5px solid #b0bec9;
+    }
+
+    .cal-loading {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: var(--space-8);
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+
+    /* Mapka */
+    .location-map { margin-top: var(--space-5); }
+    .location-map iframe {
+      width: 100%;
+      height: 320px;
+      border-radius: var(--radius-lg);
+      display: block;
+    }
+    .map-link {
+      margin-top: var(--space-2);
+      font-size: var(--text-sm);
+    }
+    .map-link a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+    .map-link a:hover { text-decoration: underline; }
+
+    /* ── Kontaktní formulář ── */
+    .contact-form-intro {
+      color: var(--color-text-muted);
+      font-size: var(--text-base);
+      margin-bottom: var(--space-6);
+      margin-top: calc(-1 * var(--space-2));
+    }
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text);
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      padding: 10px 14px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      transition: border-color 0.2s;
+      resize: vertical;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: var(--color-text-muted); }
+    .form-note {
+      font-size: var(--text-sm);
+      color: var(--color-primary);
+      min-height: 1.4em;
+    }
+    /* Airbnb alternativy */
+    .airbnb-alt-dual {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin-top: var(--space-6);
+    }
+    .airbnb-alt {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: var(--space-4) var(--space-5);
+      background: var(--color-surface-offset);
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+    .airbnb-alt a {
+      color: var(--color-primary);
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .airbnb-alt a:hover { text-decoration: underline; }
+    .airbnb-alt svg { flex-shrink: 0; color: var(--color-text-muted); }
+
+    /* Sidebar mini badge */
+    .sidebar-apt-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      border: 1.5px solid var(--color-primary);
+      border-radius: var(--radius-full);
+      padding: 2px 10px;
+      margin-bottom: var(--space-2);
+    }
+    .detail-sidebar-card + .detail-sidebar-card {
+      margin-top: var(--space-3);
+    }
+    /* Compact sidebar for trebichovice two-card layout */
+    .two-apt-sidebars .detail-sidebar-card {
+      padding: var(--space-4) var(--space-5);
+    }
+    .two-apt-sidebars .detail-sidebar-card h3 {
+      font-size: var(--text-base);
+      margin-bottom: var(--space-3);
+    }
+    .two-apt-sidebars .detail-sidebar-meta-row {
+      padding: 2px 0;
+      font-size: var(--text-sm);
+    }
+    .two-apt-sidebars .detail-sidebar-rules {
+      font-size: 12px;
+      margin-top: var(--space-3);
+      padding-top: var(--space-3);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo" aria-label="Domů">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><path d="M18 4L4 14v18h10v-9h8v9h10V14L18 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><circle cx="18" cy="10" r="2.5" fill="currentColor"/></svg>
+        <span class="logo-text">Naše klidná místa</span>
+      </a>
+      <nav class="nav">
+        <a href="lipno.html">Lipno</a>
+        <a href="srni.html">Srní</a>
+        <a href="trebichovice.html" class="nav-active">Třebichovice</a>
+        <a href="index.html#kontakt">Kontakt</a>
+      </nav>
+      <div class="header-actions">
+        <button class="theme-toggle" data-theme-toggle aria-label="Přepnout tmavý režim">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="detail-hero">
+    <img src="images/liska/liska_09.jpg" alt="Chalupa pod jasany – fasáda s balkónem v odpoledním světle" />
+    <div class="detail-hero-overlay"></div>
+    <div class="detail-hero-content container">
+      <p class="apt-region">Středočeský kraj · Třebichovice u Slaného</p>
+      <h1>Chalupa pod jasany</h1>
+    </div>
+  </div>
+
+  <div class="detail-body">
+    <div class="container">
+      <a href="index.html" class="detail-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Zpět na přehled
+      </a>
+
+      <!-- HLAVNÍ LAYOUT: obsah + sidebar -->
+      <div class="apt-detail-wrap">
+
+        <!-- LEVÝ SLOUPEC -->
+        <div>
+
+          <!-- Sdílený úvod -->
+          <div class="detail-description">
+            <p>Chalupa pod jasany skrývá na jednom podlaží dvě samostatná podkrovní apartmá — Lišku a Jelena.</p>
+            <p>V jednu chvíli pronajímám vždy jenom jeden z těchto apartmánů — nikdy se nestane, že by ve stejnou dobu přijeli cizí hosté do druhého apartmánu. Na celém patře tak máte vždy plné soukromí a maximální ticho. Z obou apartmánů máte přístup na velkou terasu, s výhledem do zahrady a obklopující zeleně. Na terase se dá skvěle snídat i posedět až do večera.</p>
+          </div>
+
+          <!-- Exteriér chalupy -->
+          <div class="gallery-grid" style="margin: var(--space-6) 0 var(--space-8);">
+            <div class="g-item"><img src="images/liska/liska_08.jpg" alt="Příjezdová cesta a brána chalupy" loading="lazy"><div class="g-overlay"></div></div>
+            <div class="g-item"><img src="images/liska/liska_09.jpg" alt="Chalupa – fasáda s balkónem v odpoledním světle" loading="lazy"><div class="g-overlay"></div></div>
+            <div class="g-item"><img src="images/liska/liska_07.jpg" alt="Sdílená terasa – dřevěné zábradlí, stůl se židlemi" loading="lazy"><div class="g-overlay"></div></div>
+          </div>
+
+          <!-- ═══════════════════════════════ LIŠKA ═══════════════════════════════ -->
+          <div class="apt-section" id="liska">
+            <div class="apt-section-header">
+              <span class="apt-section-tag">Liška</span>
+              <h2 class="apt-section-title">Apartmán Liška</h2>
+            </div>
+
+            <div class="detail-description">
+              <p>Menší z dvojice — útulný prostor s otevřeným půdorysem, kde postel, kuchyně a jídelna tvoří jeden vzdušný celek pod trámy. Světlo sem proudí ze všech stran, atmosféra je teplá a domácká.</p>
+              <p>Apartmán je ideální pro pár nebo malou rodinu až čtyř hostů. Je tu plně vybavená kuchyně, vlastní koupelna se sprchovým koutem i okouzlující výhled do zeleně.</p>
+            </div>
+
+            <!-- Galerie Liška -->
+            <div class="gallery-section">
+              <h2 class="detail-section-title">Fotogalerie – Liška</h2>
+              <div class="gallery-tabs" id="galleryTabsL">
+                <button class="gallery-tab active" data-cat="vse">Vše (6)</button>
+                <button class="gallery-tab" data-cat="interior">Interiér</button>
+                <button class="gallery-tab" data-cat="koupelna">Koupelna</button>
+              </div>
+              <div class="gallery-grid" id="galleryGridL">
+                <div class="g-item" data-cat="interior" data-vidx="0"><img src="images/liska/liska_01.jpg" alt="Liška – otevřený obývací prostor s postelí a kuchyní" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="interior" data-vidx="1"><img src="images/liska/liska_02.jpg" alt="Liška – pohled z druhé strany, jídelna a okna" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="interior" data-vidx="2"><img src="images/liska/liska_05.jpg" alt="Liška – detail postele s nočním stolkem" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="interior" data-vidx="3"><img src="images/liska/liska_06.jpg" alt="Liška – kuchyně s dřezem a bylinkami" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="koupelna" data-vidx="4"><img src="images/liska/liska_03.jpg" alt="Liška – koupelna s umyvadlem a WC" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="koupelna" data-vidx="5"><img src="images/liska/liska_04.jpg" alt="Liška – sprchový kout s dekorativním obkladem" loading="lazy"><div class="g-overlay"></div></div>
+              </div>
+            </div>
+
+            <!-- Vybavení Liška -->
+            <h2 class="detail-section-title">Vybavení – Liška</h2>
+            <div class="amenities-grid">
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg> WiFi</div>
+                            <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg> Terasa</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/></svg> Plná kuchyně</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/></svg> Rychlovarná konvice</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Lednička</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Mikrovlnná trouba</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> Ložní prádlo a ručníky</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/></svg> Parkování zdarma</div>
+                            <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Detektor kouře</div>
+              
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> Domácí zvířata pouze po předchozí domluvě</div>
+            </div>
+
+            <!-- Kalendář Liška -->
+            <div class="cal-section">
+              <h2 class="detail-section-title">Dostupnost a ceny – Liška</h2>
+              <div class="cal-outer" id="calOuterL">
+                <button class="cal-arrow" id="calPrevL" aria-label="Předchozí měsíc">‹</button>
+                <div class="cal-month" id="calMonthL0"></div>
+                <div class="cal-month" id="calMonthL1"></div>
+                <button class="cal-arrow" id="calNextL" aria-label="Další měsíc">›</button>
+              </div>
+              <div class="cal-legend">
+                <div class="cal-legend-item"><div class="cal-legend-dot available"></div>Volný den</div>
+                <div class="cal-legend-item"><div class="cal-legend-dot occupied"></div>Obsazeno</div>
+                <div class="cal-legend-item"><div class="cal-legend-dot blocked"></div>Blokováno</div>
+                <div style="margin-left:auto; font-size:var(--text-sm); color:var(--color-text-muted);">ceny v Kč / noc, vč. DPH</div>
+              </div>
+            </div>
+
+          </div><!-- /apt-section liska -->
+
+          <!-- ═══════════════════════════════ JELEN ═══════════════════════════════ -->
+          <div class="apt-section" id="jelen" style="margin-top: var(--space-16);">
+            <div class="apt-section-header">
+              <span class="apt-section-tag">Jelen</span>
+              <h2 class="apt-section-title">Apartmán Jelen</h2>
+            </div>
+
+            <div class="detail-description">
+              <p>Větší z dvojice — prostorný podkrovní apartmán s třema ložnicemi, plně vybavenou kuchyní, jídelnou a obývací částí. Dvě ložnice nabízí manželskou postel, třetí pak dvě jednolůžka. Každá ložnice má vlastní koupelnu (dvě jsou s vanou, jedna se sprchovým koutem).</p>
+              <p>Jelen pojme až šest hostů a hodí se skvěle pro rodiny s dětmi nebo skupinu přátel.</p>
+            </div>
+
+            <!-- Galerie Jelen -->
+            <div class="gallery-section">
+              <h2 class="detail-section-title">Fotogalerie – Jelen</h2>
+              <div class="gallery-tabs" id="galleryTabsJ">
+                <button class="gallery-tab active" data-cat="vse">Vše (8)</button>
+                <button class="gallery-tab" data-cat="obyvak">Obývací pokoj</button>
+                <button class="gallery-tab" data-cat="loznice">Ložnice</button>
+                <button class="gallery-tab" data-cat="koupelna">Koupelna</button>
+                <button class="gallery-tab" data-cat="kuchyne">Kuchyně</button>
+              </div>
+              <div class="gallery-grid" id="galleryGridJ">
+                <div class="g-item" data-cat="obyvak" data-vidx="0"><img src="images/jelen/jelen_01.jpg" alt="Jelen – otevřený obývací prostor s jídelnou a trámy" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="obyvak" data-vidx="1"><img src="images/jelen/jelen_06.jpg" alt="Jelen – obývací část s pohovkou a konferenčním stolem" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="obyvak" data-vidx="2"><img src="images/jelen/jelen_08.jpg" alt="Jelen – detail s pařezovým stolkem a rostlinami" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="loznice" data-vidx="3"><img src="images/jelen/jelen_02.jpg" alt="Jelen – hlavní ložnice s manželskou postelí" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="loznice" data-vidx="4"><img src="images/jelen/jelen_03.jpg" alt="Jelen – ložnice, skříň a střešní okno s rostlinami" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="koupelna" data-vidx="5"><img src="images/jelen/jelen_04.jpg" alt="Jelen – koupelna, dřevěná police s ručníky" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="koupelna" data-vidx="6"><img src="images/jelen/jelen_05.jpg" alt="Jelen – vana s dekorativním obkladem a střešním oknem" loading="lazy"><div class="g-overlay"></div></div>
+                <div class="g-item" data-cat="kuchyne" data-vidx="7"><img src="images/jelen/jelen_07.jpg" alt="Jelen – bílá kuchyně s dřevěnou pracovní deskou" loading="lazy"><div class="g-overlay"></div></div>
+              </div>
+            </div>
+
+            <!-- Vybavení Jelen -->
+            <h2 class="detail-section-title">Vybavení – Jelen</h2>
+            <div class="amenities-grid">
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg> WiFi</div>
+                            <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg> Terasa</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/></svg> Plná kuchyně</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/></svg> Rychlovarná konvice</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Lednička</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Trouba</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Mikrovlnná trouba</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Myčka nádobí</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> Ložní prádlo a ručníky</div>
+              <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/></svg> Parkování zdarma</div>
+                            <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Detektor kouře</div>
+                            <div class="amenity-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> Domácí zvířata pouze po předchozí domluvě</div>
+            </div>
+
+            <!-- Kalendář Jelen -->
+            <div class="cal-section">
+              <h2 class="detail-section-title">Dostupnost a ceny – Jelen</h2>
+              <div class="cal-outer" id="calOuterJ">
+                <button class="cal-arrow" id="calPrevJ" aria-label="Předchozí měsíc">‹</button>
+                <div class="cal-month" id="calMonthJ0"></div>
+                <div class="cal-month" id="calMonthJ1"></div>
+                <button class="cal-arrow" id="calNextJ" aria-label="Další měsíc">›</button>
+              </div>
+              <div class="cal-legend">
+                <div class="cal-legend-item"><div class="cal-legend-dot available"></div>Volný den</div>
+                <div class="cal-legend-item"><div class="cal-legend-dot occupied"></div>Obsazeno</div>
+                <div class="cal-legend-item"><div class="cal-legend-dot blocked"></div>Blokováno</div>
+                <div style="margin-left:auto; font-size:var(--text-sm); color:var(--color-text-muted);">ceny v Kč / noc, vč. DPH</div>
+              </div>
+            </div>
+
+          </div><!-- /apt-section jelen -->
+
+          <!-- Lokalita -->
+          <h2 class="detail-section-title" style="margin-top: var(--space-10);">Lokalita</h2>
+          <div class="detail-description">
+            <p>Třebichovice jsou klidná obec u Slaného ve Středočeském kraji, obklopená lesy a poli. Chalupa leží přímo u lesa, jen pár kroků od stezek na Vinařickou horu — nevysoký vrch s výhledem desítky kilometrů daleko, kam se chodívá na procházky i výlety se psy a dětmi.</p>
+            <p>Autem se dostanete za cca 25 minut na okraj Prahy. Obchody a restaurace pak najdete v 10 minut vzdáleném Slaném či Kladně. Třebichovice jsou ideálním místem pro ty, kdo chtějí zpomalit, být v přírodě a přitom být v dojezdové vzdálenosti ruchu města.</p>
+            <p>Kolem chalupy se pravidelně pohybuje zvěř — srnky jsou tu téměř každý den a často přespávají přímo na zahradě. Od časného rána Vás pak z postele bude tahat zpěv ptáků.</p>
+          </div>
+          <div class="location-map">
+            <iframe
+              src="https://frame.mapy.cz/zakladni?x=14.0799991&y=50.1917437&z=16&p=3&l=0"
+              width="100%" height="320"
+              frameborder="0" style="border:0;"
+              allowfullscreen loading="lazy"
+              title="Mapa – Třebichovice 168"
+            ></iframe>
+            <p class="map-link"><a href="https://mapy.com/en/turisticka?source=addr&id=9680975&ds=1&x=14.0799991&y=50.1917437&z=17" target="_blank" rel="noopener">Otevřít v Mapy.cz &rarr;</a></p>
+          </div>
+
+          <!-- Kontaktní formulář -->
+          <div class="contact-form-wrap" style="margin-top: var(--space-10);">
+            <h2 class="detail-section-title">Napište mi</h2>
+            <p class="contact-form-intro">Máte zájem o termín nebo otázku? Napište mi a ozvu se Vám co nejdříve.</p>
+            <form class="contact-form" id="contactForm" action="https://formspree.io/f/mjgpqdwq" method="POST">
+              <input type="hidden" name="apartman" value="Třebichovice" />
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="cf-name">Vaše jméno</label>
+                  <input type="text" id="cf-name" name="jmeno" placeholder="Jan Novák" required />
+                </div>
+                <div class="form-group">
+                  <label for="cf-email">E-mail</label>
+                  <input type="email" id="cf-email" name="email" placeholder="jan@example.com" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="cf-apt">Který apartmán vás zajímá?</label>
+                <select id="cf-apt" name="ktery_apartman">
+                  <option value="">— vyberte —</option>
+                  <option value="Liška">Liška (až 4 hosté)</option>
+                  <option value="Jelen">Jelen (až 6 hostů)</option>
+                  <option value="Oba">Oba najednou (až 10 hostů)</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="cf-from">Příjezd</label>
+                  <input type="date" id="cf-from" name="prijezd" />
+                </div>
+                <div class="form-group">
+                  <label for="cf-to">Odjezd</label>
+                  <input type="date" id="cf-to" name="odjezd" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="cf-message">Zpráva</label>
+                <textarea id="cf-message" name="zprava" rows="4" placeholder="Napište nám, co vás zajímá — počet hostů, termín, dotaz…"></textarea>
+              </div>
+              <div><button type="submit" class="btn btn-primary">Odeslat zprávu</button></div>
+              <p class="form-note" id="formNote"></p>
+            </form>
+
+            <div class="airbnb-alt-dual">
+              <div class="airbnb-alt">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v4l3 3"/></svg>
+                Rezervovat Lišku přes Airbnb:
+                <a href="https://www.airbnb.cz/h/liska" target="_blank" rel="noopener">airbnb.cz/h/liska &rarr;</a>
+              </div>
+              <div class="airbnb-alt">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v4l3 3"/></svg>
+                Rezervovat Jelena přes Airbnb:
+                <a href="https://www.airbnb.cz/h/jelen" target="_blank" rel="noopener">airbnb.cz/h/jelen &rarr;</a>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /levý sloupec -->
+
+        <!-- SIDEBAR -->
+        <aside class="detail-sidebar">
+          <div class="two-apt-sidebars">
+
+            <!-- Sidebar: Liška -->
+            <div class="detail-sidebar-card" id="sidebarLiska">
+              <div class="sidebar-apt-badge">Liška</div>
+              <h3>Základní informace</h3>
+              <div class="detail-sidebar-meta">
+                <div class="detail-sidebar-meta-row"><span>Adresa</span><span>Třebichovice 168, 273 06</span></div>
+                <div class="detail-sidebar-meta-row"><span>Hosté</span><span>až 4</span></div>
+<div class="detail-sidebar-meta-row"><span>Postele</span><span style="text-align:right">1× dvojlůžko<br>+ 1× rozkládací pohovka</span></div>
+                <div class="detail-sidebar-meta-row"><span>Koupelny</span><span>1</span></div>
+                <div class="detail-sidebar-meta-row"><span>Min. pobyt</span><span>2 noci</span></div>
+                <div class="detail-sidebar-meta-row"><span>Hodnocení</span><span>5,0 ★ (22 recenzí)</span></div>
+              </div>
+              <div class="detail-sidebar-rules">
+                <strong>Příjezd:</strong> od 15:00<br>
+                <strong>Odjezd:</strong> do 11:00
+              </div>
+            </div>
+
+            <!-- Sidebar: Jelen -->
+            <div class="detail-sidebar-card sidebar-hidden" id="sidebarJelen">
+              <div class="sidebar-apt-badge">Jelen</div>
+              <h3>Základní informace</h3>
+              <div class="detail-sidebar-meta">
+                <div class="detail-sidebar-meta-row"><span>Adresa</span><span>Třebichovice 168, 273 06</span></div>
+                <div class="detail-sidebar-meta-row"><span>Hosté</span><span>až 6</span></div>
+                <div class="detail-sidebar-meta-row"><span>Ložnice</span><span>3</span></div>
+                <div class="detail-sidebar-meta-row"><span>Postele</span><span style="text-align:right">2× dvojlůžko<br>+ 2× jednolůžko</span></div>
+                <div class="detail-sidebar-meta-row"><span>Koupelny</span><span>3</span></div>
+                <div class="detail-sidebar-meta-row"><span>Min. pobyt</span><span>3 noci</span></div>
+                <div class="detail-sidebar-meta-row"><span>Hodnocení</span><span>5,0 ★ (8 recenzí)</span></div>
+              </div>
+              <div class="detail-sidebar-rules">
+                <strong>Příjezd:</strong> od 15:00<br>
+                <strong>Odjezd:</strong> do 11:00
+              </div>
+            </div>
+
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Fotogalerie">
+    <button class="lightbox-close" id="lbClose" aria-label="Zavřít">×</button>
+    <button class="lightbox-nav lightbox-prev" id="lbPrev" aria-label="Předchozí">‹</button>
+    <img id="lbImg" src="" alt="" />
+    <button class="lightbox-nav lightbox-next" id="lbNext" aria-label="Další">›</button>
+    <div class="lightbox-counter" id="lbCounter"></div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <svg width="28" height="28" viewBox="0 0 36 36" fill="none"><path d="M18 4L4 14v18h10v-9h8v9h10V14L18 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><circle cx="18" cy="10" r="2.5" fill="currentColor"/></svg>
+          <span>Naše klidná místa</span>
+        </div>
+        <div class="footer-links">
+          <a href="lipno.html">Lipno</a>
+          <a href="srni.html">Srní</a>
+          <a href="trebichovice.html">Třebichovice</a>
+          <a href="index.html#kontakt">Kontakt</a>
+        </div>
+        <p class="footer-copy">© 2026 Naše klidná místa · Česká republika</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+
+  <script>
+    // ── Kalendář dostupnosti – Liška (ID 3) ──
+    (function() {
+      const APARTMENT_ID = 3;
+      const API_BASE = 'https://hostmaster-production.up.railway.app/api/public/availability';
+      const CS_MONTHS = ['Leden','Únor','Březen','Duben','Květen','Červen',
+                         'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+      const CS_DAYS = ['Po','Út','St','Čt','Pá','So','Ne'];
+      let calData = null;
+      let currentOffset = 0;
+      const MAX_OFFSET = 11;
+
+      const today = new Date(); today.setHours(0,0,0,0);
+
+      async function fetchCalData() {
+        if (calData) return calData;
+        try {
+          const res = await fetch(`${API_BASE}/${APARTMENT_ID}`);
+          if (!res.ok) throw new Error(res.status);
+          calData = await res.json();
+        } catch(e) {
+          calData = { occupied: [], blocked: [], prices: [] };
+          console.warn('Kalendář Liška: nelze načíst data', e);
+        }
+        return calData;
+      }
+
+      function dateStr(y, m, d) {
+        return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      }
+
+      function renderMonth(containerId, year, month, data) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const occupied = new Set(data.occupied || []);
+        const blocked  = new Set((data.blocked || []).map(b => b.date || b));
+        const priceMap = {};
+        (data.prices || []).forEach(p => { priceMap[p.date] = p.price; });
+        const title = `${CS_MONTHS[month]} ${year}`;
+        const firstDay = new Date(year, month, 1).getDay();
+        const firstDayMon = (firstDay + 6) % 7;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let html = `<div class="cal-month-header"><button class="cal-nav" aria-label="Předchozí">‹</button><span class="cal-month-title">${title}</span><button class="cal-nav" aria-label="Další">›</button></div><div class="cal-grid">`;
+        CS_DAYS.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+        for (let i = 0; i < firstDayMon; i++) { html += `<div class="cal-day empty"></div>`; }
+        for (let d = 1; d <= daysInMonth; d++) {
+          const ds = dateStr(year, month, d);
+          const dayDate = new Date(year, month, d);
+          let cls = 'cal-day';
+          if (dayDate < today) cls += ' past';
+          else if (occupied.has(ds)) cls += ' occupied';
+          else if (blocked.has(ds))  cls += ' blocked';
+          else cls += ' available';
+          if (dayDate.toDateString() === today.toDateString()) cls += ' today';
+          const price = priceMap[ds];
+          const priceHtml = price ? `<span class="day-price">${price.toLocaleString('cs-CZ')}</span>` : '';
+          html += `<div class="${cls}"><span class="day-num">${d}</span>${priceHtml}</div>`;
+        }
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      function getCurrentMonths() {
+        const base = new Date();
+        return [0, 1].map((o, i) => {
+          const d = new Date(base.getFullYear(), base.getMonth() + currentOffset + o, 1);
+          return { year: d.getFullYear(), month: d.getMonth(), containerId: `calMonthL${i}` };
+        });
+      }
+
+      function attachArrows() {
+        const prev = document.getElementById('calPrevL');
+        const next = document.getElementById('calNextL');
+        if (!prev || !next) return;
+        const newPrev = prev.cloneNode(true);
+        const newNext = next.cloneNode(true);
+        prev.replaceWith(newPrev);
+        next.replaceWith(newNext);
+        newPrev.disabled = currentOffset <= 0;
+        newNext.disabled = currentOffset >= MAX_OFFSET;
+        newPrev.addEventListener('click', () => { if (currentOffset > 0) { currentOffset--; renderCalendar(); } });
+        newNext.addEventListener('click', () => { if (currentOffset < MAX_OFFSET) { currentOffset++; renderCalendar(); } });
+      }
+
+      async function renderCalendar() {
+        document.getElementById('calMonthL0').innerHTML = '<div class="cal-loading">Načítám…</div>';
+        document.getElementById('calMonthL1').innerHTML = '';
+        const data = await fetchCalData();
+        getCurrentMonths().forEach(m => renderMonth(m.containerId, m.year, m.month, data));
+        attachArrows();
+      }
+
+      renderCalendar();
+    })();
+  </script>
+
+  <script>
+    // ── Kalendář dostupnosti – Jelen (ID 4) ──
+    (function() {
+      const APARTMENT_ID = 4;
+      const API_BASE = 'https://hostmaster-production.up.railway.app/api/public/availability';
+      const CS_MONTHS = ['Leden','Únor','Březen','Duben','Květen','Červen',
+                         'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+      const CS_DAYS = ['Po','Út','St','Čt','Pá','So','Ne'];
+      let calData = null;
+      let currentOffset = 0;
+      const MAX_OFFSET = 11;
+
+      const today = new Date(); today.setHours(0,0,0,0);
+
+      async function fetchCalData() {
+        if (calData) return calData;
+        try {
+          const res = await fetch(`${API_BASE}/${APARTMENT_ID}`);
+          if (!res.ok) throw new Error(res.status);
+          calData = await res.json();
+        } catch(e) {
+          calData = { occupied: [], blocked: [], prices: [] };
+          console.warn('Kalendář Jelen: nelze načíst data', e);
+        }
+        return calData;
+      }
+
+      function dateStr(y, m, d) {
+        return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      }
+
+      function renderMonth(containerId, year, month, data) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const occupied = new Set(data.occupied || []);
+        const blocked  = new Set((data.blocked || []).map(b => b.date || b));
+        const priceMap = {};
+        (data.prices || []).forEach(p => { priceMap[p.date] = p.price; });
+        const title = `${CS_MONTHS[month]} ${year}`;
+        const firstDay = new Date(year, month, 1).getDay();
+        const firstDayMon = (firstDay + 6) % 7;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let html = `<div class="cal-month-header"><button class="cal-nav" aria-label="Předchozí">‹</button><span class="cal-month-title">${title}</span><button class="cal-nav" aria-label="Další">›</button></div><div class="cal-grid">`;
+        CS_DAYS.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+        for (let i = 0; i < firstDayMon; i++) { html += `<div class="cal-day empty"></div>`; }
+        for (let d = 1; d <= daysInMonth; d++) {
+          const ds = dateStr(year, month, d);
+          const dayDate = new Date(year, month, d);
+          let cls = 'cal-day';
+          if (dayDate < today) cls += ' past';
+          else if (occupied.has(ds)) cls += ' occupied';
+          else if (blocked.has(ds))  cls += ' blocked';
+          else cls += ' available';
+          if (dayDate.toDateString() === today.toDateString()) cls += ' today';
+          const price = priceMap[ds];
+          const priceHtml = price ? `<span class="day-price">${price.toLocaleString('cs-CZ')}</span>` : '';
+          html += `<div class="${cls}"><span class="day-num">${d}</span>${priceHtml}</div>`;
+        }
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      function getCurrentMonths() {
+        const base = new Date();
+        return [0, 1].map((o, i) => {
+          const d = new Date(base.getFullYear(), base.getMonth() + currentOffset + o, 1);
+          return { year: d.getFullYear(), month: d.getMonth(), containerId: `calMonthJ${i}` };
+        });
+      }
+
+      function attachArrows() {
+        const prev = document.getElementById('calPrevJ');
+        const next = document.getElementById('calNextJ');
+        if (!prev || !next) return;
+        const newPrev = prev.cloneNode(true);
+        const newNext = next.cloneNode(true);
+        prev.replaceWith(newPrev);
+        next.replaceWith(newNext);
+        newPrev.disabled = currentOffset <= 0;
+        newNext.disabled = currentOffset >= MAX_OFFSET;
+        newPrev.addEventListener('click', () => { if (currentOffset > 0) { currentOffset--; renderCalendar(); } });
+        newNext.addEventListener('click', () => { if (currentOffset < MAX_OFFSET) { currentOffset++; renderCalendar(); } });
+      }
+
+      async function renderCalendar() {
+        document.getElementById('calMonthJ0').innerHTML = '<div class="cal-loading">Načítám…</div>';
+        document.getElementById('calMonthJ1').innerHTML = '';
+        const data = await fetchCalData();
+        getCurrentMonths().forEach(m => renderMonth(m.containerId, m.year, m.month, data));
+        attachArrows();
+      }
+
+      renderCalendar();
+    })();
+  </script>
+
+  <script>
+    // ── Kontaktní formulář ──
+    (function() {
+      const form = document.getElementById('contactForm');
+      const note = document.getElementById('formNote');
+      if (!form) return;
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = form.querySelector('button[type=submit]');
+        btn.disabled = true;
+        btn.textContent = 'Odesílám…';
+        note.textContent = '';
+        const data = new FormData(form);
+        try {
+          const res = await fetch(form.action, {
+            method: 'POST',
+            body: data,
+            headers: { 'Accept': 'application/json' }
+          });
+          if (res.ok) {
+            note.style.color = 'var(--color-primary)';
+            note.textContent = '✓ Zpráva odeslána. Ozvu se co nejdříve!';
+            form.reset();
+          } else {
+            throw new Error();
+          }
+        } catch {
+          note.style.color = '#c0392b';
+          note.textContent = 'Odeslání se nepodařilo. Prosím napište na pstahlova@gmail.com';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Odeslat zprávu';
+      });
+    })();
+  </script>
+
+  <script>
+    // ── Galerie Liška ──
+    (function() {
+      const allPhotos = [
+        { src: 'images/liska/liska_01.jpg', alt: 'Liška – otevřený obývací prostor s postelí a kuchyní' },
+        { src: 'images/liska/liska_02.jpg', alt: 'Liška – pohled z druhé strany, jídelna a okna' },
+        { src: 'images/liska/liska_05.jpg', alt: 'Liška – detail postele s nočním stolkem' },
+        { src: 'images/liska/liska_06.jpg', alt: 'Liška – kuchyně s dřezem a bylinkami' },
+        { src: 'images/liska/liska_03.jpg', alt: 'Liška – koupelna s umyvadlem a WC' },
+        { src: 'images/liska/liska_04.jpg', alt: 'Liška – sprchový kout s dekorativním obkladem' },
+      ];
+
+      let currentIdx = 0;
+      let visiblePhotos = [...allPhotos];
+      let activeGallery = null;
+
+      const lightbox = document.getElementById('lightbox');
+      const lbImg = document.getElementById('lbImg');
+      const lbCounter = document.getElementById('lbCounter');
+
+      function openLightbox(idx) {
+        currentIdx = ((idx % visiblePhotos.length) + visiblePhotos.length) % visiblePhotos.length;
+        lbImg.src = visiblePhotos[currentIdx].src;
+        lbImg.alt = visiblePhotos[currentIdx].alt;
+        lbCounter.textContent = `${currentIdx + 1} / ${visiblePhotos.length}`;
+        lightbox.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        activeGallery = 'L';
+      }
+
+      document.getElementById('galleryTabsL').addEventListener('click', e => {
+        const btn = e.target.closest('.gallery-tab');
+        if (!btn) return;
+        document.querySelectorAll('#galleryTabsL .gallery-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.cat;
+        const items = document.querySelectorAll('#galleryGridL .g-item');
+        items.forEach(item => {
+          item.style.display = (cat === 'vse' || item.dataset.cat === cat) ? '' : 'none';
+        });
+        visiblePhotos = [];
+        items.forEach(item => {
+          if (item.style.display !== 'none') {
+            visiblePhotos.push(allPhotos[parseInt(item.dataset.vidx)]);
+          }
+        });
+      });
+
+      document.getElementById('galleryGridL').addEventListener('click', e => {
+        const item = e.target.closest('.g-item');
+        if (!item || item.style.display === 'none') return;
+        const clickedIdx = parseInt(item.dataset.vidx);
+        const pos = visiblePhotos.findIndex(p => p.src === allPhotos[clickedIdx].src);
+        openLightbox(pos >= 0 ? pos : 0);
+      });
+
+      // Store navigate function for Liška
+      window._lbNavL = openLightbox;
+    })();
+  </script>
+
+  <script>
+    // ── Galerie Jelen ──
+    (function() {
+      const allPhotosJ = [
+        { src: 'images/jelen/jelen_01.jpg', alt: 'Jelen – otevřený obývací prostor s jídelnou a trámy' },
+        { src: 'images/jelen/jelen_06.jpg', alt: 'Jelen – obývací část s pohovkou a konferenčním stolem' },
+        { src: 'images/jelen/jelen_08.jpg', alt: 'Jelen – detail s pařezovým stolkem a rostlinami' },
+        { src: 'images/jelen/jelen_02.jpg', alt: 'Jelen – hlavní ložnice s manželskou postelí' },
+        { src: 'images/jelen/jelen_03.jpg', alt: 'Jelen – ložnice, skříň a střešní okno s rostlinami' },
+        { src: 'images/jelen/jelen_04.jpg', alt: 'Jelen – koupelna, dřevěná police s ručníky' },
+        { src: 'images/jelen/jelen_05.jpg', alt: 'Jelen – vana s dekorativním obkladem a střešním oknem' },
+        { src: 'images/jelen/jelen_07.jpg', alt: 'Jelen – bílá kuchyně s dřevěnou pracovní deskou' },
+      ];
+
+      let currentIdxJ = 0;
+      let visiblePhotosJ = [...allPhotosJ];
+
+      const lightbox = document.getElementById('lightbox');
+      const lbImg = document.getElementById('lbImg');
+      const lbCounter = document.getElementById('lbCounter');
+
+      function openLightboxJ(idx) {
+        currentIdxJ = ((idx % visiblePhotosJ.length) + visiblePhotosJ.length) % visiblePhotosJ.length;
+        lbImg.src = visiblePhotosJ[currentIdxJ].src;
+        lbImg.alt = visiblePhotosJ[currentIdxJ].alt;
+        lbCounter.textContent = `${currentIdxJ + 1} / ${visiblePhotosJ.length}`;
+        lightbox.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        window._activeLightboxGallery = 'J';
+        window._lbNavActive = openLightboxJ;
+      }
+
+      document.getElementById('galleryTabsJ').addEventListener('click', e => {
+        const btn = e.target.closest('.gallery-tab');
+        if (!btn) return;
+        document.querySelectorAll('#galleryTabsJ .gallery-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.cat;
+        const items = document.querySelectorAll('#galleryGridJ .g-item');
+        items.forEach(item => {
+          item.style.display = (cat === 'vse' || item.dataset.cat === cat) ? '' : 'none';
+        });
+        visiblePhotosJ = [];
+        items.forEach(item => {
+          if (item.style.display !== 'none') {
+            visiblePhotosJ.push(allPhotosJ[parseInt(item.dataset.vidx)]);
+          }
+        });
+      });
+
+      document.getElementById('galleryGridJ').addEventListener('click', e => {
+        const item = e.target.closest('.g-item');
+        if (!item || item.style.display === 'none') return;
+        const clickedIdx = parseInt(item.dataset.vidx);
+        const pos = visiblePhotosJ.findIndex(p => p.src === allPhotosJ[clickedIdx].src);
+        openLightboxJ(pos >= 0 ? pos : 0);
+        window._activeLightboxGallery = 'J';
+        window._lbNavActive = openLightboxJ;
+      });
+
+      window._lbNavJ = openLightboxJ;
+    })();
+  </script>
+
+  <script>
+    // ── Sidebar aktivní karta podle scrollu ──
+    (function() {
+      const cardLiska = document.getElementById('sidebarLiska');
+      const cardJelen = document.getElementById('sidebarJelen');
+      const secJelen  = document.getElementById('jelen');
+      if (!cardLiska || !cardJelen || !secJelen) return;
+
+      let showingJelen = false;
+
+      function updateSidebar() {
+        const jelenTop = secJelen.getBoundingClientRect().top;
+        const threshold = window.innerHeight * 0.45;
+        const shouldShowJelen = jelenTop <= threshold;
+
+        if (shouldShowJelen && !showingJelen) {
+          // Přejdi na Jelena
+          cardLiska.classList.add('sidebar-hidden');
+          cardJelen.classList.remove('sidebar-hidden');
+          showingJelen = true;
+        } else if (!shouldShowJelen && showingJelen) {
+          // Přejdi zpět na Lišku
+          cardJelen.classList.add('sidebar-hidden');
+          cardLiska.classList.remove('sidebar-hidden');
+          showingJelen = false;
+        }
+      }
+
+      updateSidebar();
+      window.addEventListener('scroll', updateSidebar, { passive: true });
+    })();
+  </script>
+
+  <script>
+    // ── Lightbox – sdílené ovládání pro obě galerie ──
+    (function() {
+      const lightbox = document.getElementById('lightbox');
+
+      // Set default active nav (Liška)
+      window._activeLightboxGallery = 'L';
+
+      // Liška gallery clicks set _activeLightboxGallery = 'L'
+      document.getElementById('galleryGridL').addEventListener('click', () => {
+        window._activeLightboxGallery = 'L';
+        window._lbNavActive = window._lbNavL;
+      });
+
+      function getNav() {
+        return window._activeLightboxGallery === 'J' ? window._lbNavJ : window._lbNavL;
+      }
+      function getCurrentIdx() {
+        if (window._activeLightboxGallery === 'J') {
+          return window._currentIdxJ || 0;
+        }
+        return window._currentIdxL || 0;
+      }
+
+      function closeLightbox() {
+        lightbox.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      document.getElementById('lbClose').addEventListener('click', closeLightbox);
+
+      document.getElementById('lbPrev').addEventListener('click', () => {
+        if (window._lbNavActive) {
+          // find current index from counter
+          const counter = document.getElementById('lbCounter').textContent;
+          const cur = parseInt(counter.split('/')[0].trim()) - 1;
+          window._lbNavActive(cur - 1);
+        }
+      });
+      document.getElementById('lbNext').addEventListener('click', () => {
+        if (window._lbNavActive) {
+          const counter = document.getElementById('lbCounter').textContent;
+          const cur = parseInt(counter.split('/')[0].trim()) - 1;
+          window._lbNavActive(cur + 1);
+        }
+      });
+
+      document.addEventListener('keydown', e => {
+        if (!lightbox.classList.contains('open')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft' && window._lbNavActive) {
+          const counter = document.getElementById('lbCounter').textContent;
+          const cur = parseInt(counter.split('/')[0].trim()) - 1;
+          window._lbNavActive(cur - 1);
+        }
+        if (e.key === 'ArrowRight' && window._lbNavActive) {
+          const counter = document.getElementById('lbCounter').textContent;
+          const cur = parseInt(counter.split('/')[0].trim()) - 1;
+          window._lbNavActive(cur + 1);
+        }
+      });
+
+      lightbox.addEventListener('click', e => {
+        if (e.target === lightbox) closeLightbox();
+      });
+    })();
+  </script>
+
+</body>
+</html>
