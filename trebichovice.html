@@ -147,6 +147,14 @@
     .detail-sidebar-card.sidebar-hidden {
       display: none;
     }
+    @media (max-width: 900px) {
+      .detail-sidebar-card.sidebar-hidden {
+        display: block;
+      }
+      .sidebar-apt-badge {
+        display: block;
+      }
+    }
 
     /* ── Sekce apartmánů ── */
     .apt-section {
@@ -835,7 +843,7 @@
                 <div class="detail-sidebar-meta-row"><span>Ložnice</span><span>3</span></div>
                 <div class="detail-sidebar-meta-row"><span>Postele</span><span style="text-align:right">2× dvojlůžko<br>+ 2× jednolůžko</span></div>
                 <div class="detail-sidebar-meta-row"><span>Koupelny</span><span>3</span></div>
-                <div class="detail-sidebar-meta-row"><span>Min. pobyt</span><span>3 noci</span></div>
+                <div class="detail-sidebar-meta-row"><span>Min. pobyt</span><span style="color: #c0392b; font-weight: 600;">3 noci</span></div>
                 <div class="detail-sidebar-meta-row"><span>Hodnocení</span><span>5,0 ★ (8 recenzí)</span></div>
               </div>
               <div class="detail-sidebar-rules">
