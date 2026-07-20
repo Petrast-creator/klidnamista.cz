@@ -398,6 +398,80 @@
     }
     .airbnb-alt a:hover { text-decoration: underline; }
     .airbnb-alt svg { flex-shrink: 0; color: var(--color-text-muted); }
+
+    /* Interaktivní výběr termínu */
+    .cal-day.selected-start, .cal-day.selected-end {
+      background: var(--color-primary) !important;
+      color: #fff !important;
+      border-radius: 6px;
+    }
+    .cal-day.in-range {
+      background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+      border-radius: 0;
+    }
+    .cal-day.invalid-range {
+      background: rgba(192,57,43,0.10);
+      border-radius: 0;
+    }
+    .cal-day .day-min {
+      font-size: 8px; color: #aaa; line-height: 1.2; margin-top: 2px; text-align: center; white-space: nowrap;
+    }
+    .cal-warn {
+      display: none;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #c0392b;
+      font-weight: 600;
+      text-align: center;
+    }
+    /* Summary bar */
+    .cal-summary-bar {
+      margin-top: 16px;
+      padding: 14px 18px;
+      background: var(--color-surface-offset, #f5f5f3);
+      border-radius: 10px;
+      border: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      min-height: 52px;
+    }
+    .summary-hint { font-size: 14px; color: var(--color-text-muted); }
+    .summary-info { font-size: 14px; color: var(--color-text); }
+    .summary-total { font-size: 22px; font-weight: 700; color: var(--color-primary); }
+    .summary-vat { font-size: 12px; color: var(--color-text-muted); }
+    .summary-fee { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+    .btn-clear {
+      margin-left: auto;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--color-border);
+      background: transparent;
+      color: var(--color-text-muted);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-clear:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+    .summary-fee strong {
+      color: var(--color-success, #437A22);
+      font-weight: 700;
+    }
+    .summary-deposit {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--color-border);
+      font-size: 13px;
+    }
+    .deposit-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 2px 0;
+      color: var(--color-text-muted);
+    }
+    .deposit-row strong { color: var(--color-text); }
   </style>
 </head>
 <body>
@@ -553,9 +627,10 @@
             <div class="cal-legend">
               <div class="cal-legend-item"><div class="cal-legend-dot available"></div>Volný den</div>
               <div class="cal-legend-item"><div class="cal-legend-dot occupied"></div>Obsazeno</div>
-              <div class="cal-legend-item"><div class="cal-legend-dot blocked"></div>Blokováno</div>
               <div style="margin-left:auto; font-size:var(--text-sm); color:var(--color-text-muted);">ceny v Kč / noc, vč. DPH</div>
             </div>
+          <div class="cal-warn" id="calWarn"></div>
+          <div class="cal-summary-bar" id="calSummary"><span class="summary-hint">Klikněte na den příjezdu a poté odjezdu</span></div>
             <!-- Kontaktní formulář -->
             <div class="contact-form-wrap">
               <h2 class="detail-section-title" style="margin-top: var(--space-10);">Napište mi</h2>
@@ -610,11 +685,10 @@
               <div class="detail-sidebar-meta-row"><span>Ložnice</span><span>2</span></div>
               <div class="detail-sidebar-meta-row"><span>Postele</span><span style="text-align:right">2× dvojlůžko<br>+ rozkládací pohovka</span></div>
               <div class="detail-sidebar-meta-row"><span>Koupelny</span><span>1,5</span></div>
-              <div class="detail-sidebar-meta-row"><span>Min. pobyt</span><span style="text-align:right">5 nocí (1. 7.–31. 8.)<br>3 noci (1. 9.–30. 6.)</span></div>
             </div>
             <div class="detail-sidebar-rules">
               <strong>Příjezd:</strong> od 15:00<br>
-              <strong>Odjezd:</strong> do 10:00<br>
+              <strong>Odjezd:</strong> do 10:30<br>
               <strong>Děti:</strong> nevhodné pro děti do 2 let<br>
               <strong>Párty:</strong> nejsou povoleny
             </div>
@@ -655,132 +729,238 @@
 
   <script src="script.js"></script>
   <script>
-    // ── Kalendář dostupnosti ──
-    (function() {
-      const APARTMENT_ID = 1;
-      const API_BASE = 'https://hostmaster-production.up.railway.app/api/public/availability';
-      const CS_MONTHS = ['Leden','Únor','Březen','Duben','Květen','Červen',
+    // ── Kalendář — interaktivní výběr termínu ────────────────────────
+    const APARTMENT_ID = 1;
+    const LOCAL_FEE = 35; // Kč/noc/dospělého hosta (0 = bez poplatku)
+    const API_URL = `https://hostmaster-production.up.railway.app/api/public/availability/${APARTMENT_ID}`;
+
+    let calData = null;
+    let calOffset = 0;
+    const MONTH_NAMES = ['Leden','Únor','Březen','Duben','Květen','Červen',
                          'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
-      const CS_DAYS = ['Po','Út','St','Čt','Pá','So','Ne'];
+    const DOW = ['Po','Út','St','Čt','Pá','So','Ne'];
 
-      let calData = null; // cache
-      let offsets = [0, 1]; // which months to show (0 = current)
+    // Stav výběru
+    let sel = { start: null, end: null, hover: null };
 
+    // ── Helpers ───────────────────────────────────────────────────────
+    const pad = n => String(n).padStart(2,'0');
+    const todayStr = (() => { const t = new Date(); t.setHours(0,0,0,0); return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`; })();
+    function dateFromStr(s) { const [y,m,d] = s.split('-'); return new Date(+y,+m-1,+d); }
+    function fmtDate(ds) { const d = dateFromStr(ds); return `${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`; }
+    function addDays(ds, n) { const d = dateFromStr(ds); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+    function daysBetween(ds1, ds2) { return Math.round((dateFromStr(ds2)-dateFromStr(ds1))/86400000); }
+    function getStatus(ds) {
+      if (!calData) return 'available';
+      if (calData.occupied && calData.occupied.includes(ds)) return 'occupied';
+      if (calData.blocked && calData.blocked.some(b => (b.date||b) === ds)) return 'occupied'; // blokováno = obsazeno
+      return 'available';
+    }
+    function getPrice(ds) {
+      if (!calData || !calData.prices) return null;
+      const e = calData.prices.find(p => p.date === ds);
+      return e ? e.price : null;
+    }
+    function getMinStay(ds) {
+      if (!calData || !calData.prices) return 1;
+      const e = calData.prices.find(p => p.date === ds);
+      return e ? (e.min_stay || 1) : 1;
+    }
+    function calcMinStay(startDs, nights) {
+      let max = 1;
+      for (let i = 0; i < nights; i++) max = Math.max(max, getMinStay(addDays(startDs, i)));
+      return max;
+    }
+
+    // ── Načtení dat ───────────────────────────────────────────────────
+    async function loadCalData() {
+      try {
+        const today = new Date();
+        const from = `${today.getFullYear()}-${pad(today.getMonth()+1)}-01`;
+        const toD = new Date(today.getFullYear(), today.getMonth()+14, 0);
+        const to = `${toD.getFullYear()}-${pad(toD.getMonth()+1)}-${pad(toD.getDate())}`;
+        const res = await fetch(`${API_URL}?from=${from}&to=${to}`);
+        calData = await res.json();
+        renderCalendars();
+      } catch(e) {
+        document.getElementById('calMonth0').innerHTML = '<div class="cal-loading">Nepodařilo se načíst dostupnost.</div>';
+      }
+    }
+
+    // ── Render kalendáře ──────────────────────────────────────────────
+    function renderMonth(containerId, year, month) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES[month]} ${year}</span></div><div class="cal-grid">`;
+      DOW.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+      let dow = new Date(year, month, 1).getDay();
+      dow = dow === 0 ? 6 : dow - 1;
+      for (let i = 0; i < dow; i++) html += `<div class="cal-day empty"></div>`;
+      const days = new Date(year, month+1, 0).getDate();
+      for (let d = 1; d <= days; d++) {
+        const ds = `${year}-${pad(month+1)}-${pad(d)}`;
+        const past = ds < todayStr;
+        const status = getStatus(ds);
+        const price = getPrice(ds);
+        const minStay = getMinStay(ds);
+        const isOcc = (status === 'occupied');
+        const isStart = sel.start === ds;
+        const isEnd   = sel.end   === ds;
+        let inRange = false, invalidRange = false;
+        if (sel.start && !sel.end && sel.hover && sel.hover > sel.start && ds > sel.start && ds <= sel.hover) {
+          const nights = daysBetween(sel.start, sel.hover);
+          const ms = calcMinStay(sel.start, nights);
+          if (nights < ms) invalidRange = true; else inRange = true;
+        } else if (sel.start && sel.end && ds > sel.start && ds < sel.end) {
+          inRange = true;
+        }
+        let cls = `cal-day ${past ? 'past' : isOcc ? 'occupied' : 'available'}`;
+        if (isStart) cls += ' selected-start';
+        if (isEnd)   cls += ' selected-end';
+        if (inRange) cls += ' in-range';
+        if (invalidRange) cls += ' invalid-range';
+        if (ds === todayStr) cls += ' today';
+        const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
+        const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
+        html += `<div class="${cls}" data-ds="${ds}"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function renderCalendars() {
       const today = new Date();
-      today.setHours(0,0,0,0);
+      const d0 = new Date(today.getFullYear(), today.getMonth() + calOffset, 1);
+      const d1 = new Date(today.getFullYear(), today.getMonth() + calOffset + 1, 1);
+      renderMonth('calMonth0', d0.getFullYear(), d0.getMonth());
+      renderMonth('calMonth1', d1.getFullYear(), d1.getMonth());
+      document.getElementById('calPrevOuter').disabled = (calOffset <= 0);
+      updateSummary();
+    }
 
-      async function fetchCalData() {
-        if (calData) return calData;
-        const from = new Date();
-        const to = new Date(); to.setFullYear(to.getFullYear() + 1);
-        const fmt = d => d.toISOString().slice(0,10);
-        try {
-          const res = await fetch(`${API_BASE}/${APARTMENT_ID}?from=${fmt(from)}&to=${fmt(to)}`);
-          if (!res.ok) throw new Error(res.status);
-          calData = await res.json();
-        } catch(e) {
-          calData = { occupied: [], blocked: [], prices: [] };
-          console.warn('Kalendář: nelze načíst data', e);
+    // ── Výběr termínu ─────────────────────────────────────────────────
+    function handleClick(ds) {
+      const status = getStatus(ds);
+      if (status === 'occupied') return;
+      if (sel.start === ds && !sel.end) { sel = { start: null, end: null, hover: null }; renderCalendars(); return; }
+      if (sel.start && sel.end) { sel = { start: ds, end: null, hover: null }; renderCalendars(); return; }
+      if (!sel.start) { sel.start = ds; sel.end = null; sel.hover = null; renderCalendars(); return; }
+      if (ds <= sel.start) { sel.start = ds; sel.end = null; sel.hover = null; }
+      else { sel.end = ds; sel.hover = null; }
+      renderCalendars();
+    }
+
+    function handleHover(ds) {
+      if (sel.start && !sel.end && ds !== sel.hover) {
+        sel.hover = ds;
+        renderCalendars();
+        // Warning
+        const warn = document.getElementById('calWarn');
+        if (warn && ds > sel.start) {
+          const nights = daysBetween(sel.start, ds);
+          const ms = calcMinStay(sel.start, nights);
+          if (nights < ms) {
+            warn.textContent = `⚠ Minimální pobyt pro tento termín je ${ms} nocí — přidejte ještě ${ms - nights} ${ms - nights === 1 ? 'noc' : 'noci'}`;
+            warn.style.display = 'block';
+          } else { warn.style.display = 'none'; }
         }
-        return calData;
       }
+    }
 
-      function dateStr(y, m, d) {
-        return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    function handleHoverEnd() {
+      if (sel.hover) { sel.hover = null; renderCalendars(); }
+      const warn = document.getElementById('calWarn');
+      if (warn) warn.style.display = 'none';
+    }
+
+    // Event delegation
+    document.addEventListener('click', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day || day.classList.contains('occupied') || day.classList.contains('past')) return;
+      handleClick(day.dataset.ds);
+    });
+    document.addEventListener('mouseover', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day || day.classList.contains('occupied') || day.classList.contains('past')) return;
+      handleHover(day.dataset.ds);
+    });
+    document.addEventListener('mouseout', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day) return;
+      if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEnd();
+    });
+
+    // ── Summary bar ───────────────────────────────────────────────────
+    function updateSummary() {
+      const el = document.getElementById('calSummary');
+      if (!el) return;
+      if (!sel.start) {
+        el.innerHTML = '<span class="summary-hint">Klikněte na den příjezdu a poté odjezdu</span>'; return;
       }
-
-      function renderMonth(containerId, year, month, data) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-
-        const occupied = new Set(data.occupied || []);
-        const blocked  = new Set((data.blocked || []).map(b => b.date || b));
-        // Build price map: date -> price label
-        const priceMap = {};
-        (data.prices || []).forEach(p => { priceMap[p.date] = p.price; });
-
-        const title = `${CS_MONTHS[month]} ${year}`;
-        // First day of month (0=Sun … 6=Sat), convert to Mon-based (0=Mon … 6=Sun)
-        const firstDay = new Date(year, month, 1).getDay();
-        const firstDayMon = (firstDay + 6) % 7;
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        let html = `
-          <div class="cal-month-header">
-            <button class="cal-nav" id="calPrev" aria-label="Předchozí měsíc">‹</button>
-            <span class="cal-month-title">${title}</span>
-            <button class="cal-nav" id="calNext" aria-label="Další měsíc">›</button>
+      if (!sel.end) {
+        el.innerHTML = `<div class="summary-info">Příjezd: <strong>${fmtDate(sel.start)}</strong></div>
+          <div class="summary-hint">Nyní klikněte na den odjezdu</div>
+          <button class="btn-clear" onclick="resetSel()">Zrušit</button>`; return;
+      }
+      const nights = daysBetween(sel.start, sel.end);
+      const ms = calcMinStay(sel.start, nights);
+      if (nights < ms) {
+        el.innerHTML = `<span style="color:#c0392b;font-size:14px">⚠ Minimální pobyt pro tento termín je ${ms} nocí. Vyberte delší termín.</span>
+          <button class="btn-clear" onclick="resetSel()">Zrušit výběr</button>`; return;
+      }
+      let total = 0;
+      for (let i = 0; i < nights; i++) total += (getPrice(addDays(sel.start, i)) || 0);
+      const deposit = `
+        <div class="summary-deposit">
+          <div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total * 0.3).toLocaleString('cs-CZ')} Kč</strong></div>
+          <div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total * 0.7).toLocaleString('cs-CZ')} Kč</strong></div>
+        </div>`;
+      const feeNote = LOCAL_FEE > 0 ? `<div class="summary-fee">+ Místní poplatek z pobytu <strong>${LOCAL_FEE} Kč</strong>/noc za dospělého hosta (účtováno zvlášť)</div>` : '';
+      el.innerHTML = `
+        <div style="flex:1">
+          <div class="summary-info">Příjezd <strong>${fmtDate(sel.start)}</strong> → Odjezd <strong>${fmtDate(sel.end)}</strong> · <strong>${nights} nocí</strong></div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px">
+            <span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span>
+            <span class="summary-vat">vč. DPH</span>
           </div>
-          <div class="cal-grid">
-        `;
-        // Only first month gets nav buttons visible — second follows automatically
-        // Day-of-week headers
-        CS_DAYS.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+          ${feeNote}${deposit}
+        </div>
+        <button class="btn-clear" onclick="resetSel()">Zrušit</button>`;
+      prefillForm();
+    }
 
-        // Empty cells before 1st
-        for (let i = 0; i < firstDayMon; i++) {
-          html += `<div class="cal-day empty"></div>`;
-        }
+    function resetSel() { sel = { start: null, end: null, hover: null }; renderCalendars(); clearFormPrefill(); }
 
-        for (let d = 1; d <= daysInMonth; d++) {
-          const ds = dateStr(year, month, d);
-          const dayDate = new Date(year, month, d);
-          let cls = 'cal-day';
-          if (dayDate < today) cls += ' past';
-          else if (occupied.has(ds)) cls += ' occupied';
-          else if (blocked.has(ds))  cls += ' blocked';
-          else cls += ' available';
-          const ds2 = dateStr(year, month, d);
-          if (dayDate.toDateString() === today.toDateString()) cls += ' today';
-          const price = priceMap[ds2];
-          const priceHtml = price ? `<span class="day-price">${price.toLocaleString('cs-CZ')}</span>` : '';
-          html += `<div class="${cls}"><span class="day-num">${d}</span>${priceHtml}</div>`;
-        }
+    // ── Předvyplnění formuláře ────────────────────────────────────────
+    function prefillForm() {
+      if (!sel.start || !sel.end) return;
+      const nights = daysBetween(sel.start, sel.end);
+      const ms = calcMinStay(sel.start, nights);
+      if (nights < ms) return;
+      const fromField = document.getElementById('cf-from');
+      const toField   = document.getElementById('cf-to');
+      if (fromField) fromField.value = sel.start;
+      if (toField)   toField.value   = sel.end;
+    }
 
-        html += `</div>`;
-        container.innerHTML = html;
-      }
+    function clearFormPrefill() {
+      const fromField = document.getElementById('cf-from');
+      const toField   = document.getElementById('cf-to');
+      if (fromField) fromField.value = '';
+      if (toField)   toField.value   = '';
+    }
 
-      function getCurrentMonths() {
-        const base = new Date();
-        return offsets.map((o, i) => {
-          const d = new Date(base.getFullYear(), base.getMonth() + currentOffset + o, 1);
-          return { year: d.getFullYear(), month: d.getMonth(), containerId: `calMonth${i}` };
-        });
-      }
+    // ── Navigace ──────────────────────────────────────────────────────
+    document.getElementById('calPrevOuter').addEventListener('click', () => {
+      if (calOffset > 0) { calOffset--; renderCalendars(); }
+    });
+    document.getElementById('calNextOuter').addEventListener('click', () => {
+      calOffset++; renderCalendars();
+    });
 
-      let currentOffset = 0;
-      const MAX_OFFSET = 11; // up to 12 months ahead
+    loadCalData();
 
-      function attachArrows() {
-        const prev = document.getElementById('calPrevOuter');
-        const next = document.getElementById('calNextOuter');
-        if (!prev || !next) return;
-        prev.disabled = currentOffset <= 0;
-        next.disabled = currentOffset >= MAX_OFFSET;
-        // Replace listeners cleanly
-        const newPrev = prev.cloneNode(true);
-        const newNext = next.cloneNode(true);
-        prev.replaceWith(newPrev);
-        next.replaceWith(newNext);
-        newPrev.disabled = currentOffset <= 0;
-        newNext.disabled = currentOffset >= MAX_OFFSET;
-        newPrev.addEventListener('click', () => { if (currentOffset > 0) { currentOffset--; renderCalendar(); } });
-        newNext.addEventListener('click', () => { if (currentOffset < MAX_OFFSET) { currentOffset++; renderCalendar(); } });
-      }
-
-      async function renderCalendar() {
-        document.getElementById('calMonth0').innerHTML = '<div class="cal-loading">Načítám…</div>';
-        document.getElementById('calMonth1').innerHTML = '';
-        const data = await fetchCalData();
-        const months = getCurrentMonths();
-        months.forEach(m => renderMonth(m.containerId, m.year, m.month, data));
-        attachArrows();
-      }
-
-      renderCalendar();
-    })();
-  </script>
+</script>
   <script>
     // ── Kontaktní formulář ──
     (function() {
@@ -818,33 +998,35 @@
   </script>
   <script>
     // ── Galerie: všechny fotky v pořadí tabů ──
-    const allPhotos = [
-      { src: 'images/srni/srni_01.jpg', alt: 'Ložnice 1 – postel' },
-      { src: 'images/srni/srni_07.jpg', alt: 'Ložnice 1 – skříň' },
-      { src: 'images/srni/srni_08.jpg', alt: 'Ložnice 1 – detail postele' },
-      { src: 'images/srni/srni_09.jpg', alt: 'Ložnice 1 – pohovka' },
-      { src: 'images/srni/srni_03.jpg', alt: 'Ložnice 2 – postel' },
-      { src: 'images/srni/srni_14.jpg', alt: 'Ložnice 2 – detail' },
-      { src: 'images/srni/srni_06.jpg', alt: 'Kuchyně s jídelnou' },
-      { src: 'images/srni/srni_13.jpg', alt: 'Pohled na jídelnu' },
-      { src: 'images/srni/srni_15.jpg', alt: 'Prostřený stůl' },
-      { src: 'images/srni/srni_16.jpg', alt: 'Kuchyňský ostrůvek' },
-      { src: 'images/srni/srni_22.jpg', alt: 'Espresso a ostrůvek' },
-      { src: 'images/srni/srni_23.jpg', alt: 'Kuchyně – celkový pohled' },
-      { src: 'images/srni/srni_10.jpg', alt: 'Obývací pokoj' },
-      { src: 'images/srni/srni_11.jpg', alt: 'Obývací pokoj – tv' },
-      { src: 'images/srni/srni_21.jpg', alt: 'Obývací pokoj – detail' },
-      { src: 'images/srni/srni_25.jpg', alt: 'Obývací pokoj – sedací' },
-      { src: 'images/srni/srni_04.jpg', alt: 'Koupelna – vana' },
-      { src: 'images/srni/srni_12.jpg', alt: 'Koupelna – radiátor' },
-      { src: 'images/srni/srni_18.jpg', alt: 'Koupelna – celkový pohled' },
-      { src: 'images/srni/srni_20.jpg', alt: 'Koupelna – detail vany' },
-      { src: 'images/srni/srni_17.jpg', alt: 'Toaleta' },
-      { src: 'images/srni/srni_02.jpg', alt: 'Šumavský potok' },
-      { src: 'images/srni/srni_05.jpg', alt: 'Zahrada a okolí' },
-      { src: 'images/srni/srni_19.jpg', alt: 'Letní louka' },
-      { src: 'images/srni/srni_24.jpg', alt: 'Apartmán v zimě' },
-    ];
+     const allPhotos = [
+       { src: 'images/srni/srni_01.jpg', alt: 'Ložnice 1 – postel' },
+       { src: 'images/srni/srni_07.jpg', alt: 'Ložnice 1 – skříň' },
+       { src: 'images/srni/srni_08.jpg', alt: 'Ložnice 1 – detail postele' },
+       { src: 'images/srni/srni_09.jpg', alt: 'Ložnice 1 – pohovka' },
+       { src: 'images/srni/srni_03.jpg', alt: 'Ložnice 2 – postel' },
+       { src: 'images/srni/srni_14.jpg', alt: 'Ložnice 2 – detail' },
+       { src: 'images/srni/srni_06.jpg', alt: 'Kuchyně s jídelnou' },
+       { src: 'images/srni/srni_13.jpg', alt: 'Pohled na jídelnu' },
+       { src: 'images/srni/srni_15.jpg', alt: 'Prostřený stůl' },
+       { src: 'images/srni/srni_16.jpg', alt: 'Kuchyňský ostrůvek' },
+       { src: 'images/srni/srni_22.jpg', alt: 'Espresso a ostrůvek' },
+       { src: 'images/srni/srni_23.jpg', alt: 'Kuchyně – celkový pohled' },
+       { src: 'images/srni/srni_10.jpg', alt: 'Obývací pokoj' },
+       { src: 'images/srni/srni_11.jpg', alt: 'Obývací pokoj – tv' },
+       { src: 'images/srni/srni_21.jpg', alt: 'Obývací pokoj – detail' },
+       { src: 'images/srni/srni_25.jpg', alt: 'Obývací pokoj – sedací' },
+       { src: 'images/srni/srni_04.jpg', alt: 'Koupelna – vana' },
+       { src: 'images/srni/srni_12.jpg', alt: 'Koupelna – radiátor' },
+       { src: 'images/srni/srni_18.jpg', alt: 'Koupelna – celkový pohled' },
+       { src: 'images/srni/srni_20.jpg', alt: 'Koupelna – detail vany' },
+       { src: 'images/srni/srni_17.jpg', alt: 'Toaleta' },
+       { src: 'images/srni/srni_26.jpg', alt: 'Chalupa Srní v létě' },
+       { src: 'images/srni/srni_27.jpg', alt: 'Vchod do chalupy' },
+       { src: 'images/srni/srni_05.jpg', alt: 'Zahrada a okolí' },
+       { src: 'images/srni/srni_24.jpg', alt: 'Apartmán v zimě' },
+       { src: 'images/srni/srni_02.jpg', alt: 'Šumavský potok' },
+       { src: 'images/srni/srni_19.jpg', alt: 'Letní louka' },
+     ];
 
     let currentIdx = 0;
     // Viditelné fotky (po filtrování) pro navigaci v lightboxu

@@ -538,6 +538,52 @@
       margin-top: var(--space-3);
       padding-top: var(--space-3);
     }
+
+    /* Interaktivní výběr termínu */
+    .cal-day.selected-start, .cal-day.selected-end {
+      background: var(--color-primary) !important;
+      color: #fff !important;
+      border-radius: 6px;
+    }
+    .cal-day.in-range {
+      background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+      border-radius: 0;
+    }
+    .cal-day.invalid-range { background: rgba(192,57,43,0.10); border-radius: 0; }
+    .cal-day .day-min { font-size: 8px; color: #aaa; line-height: 1.2; margin-top: 2px; text-align: center; white-space: nowrap; }
+    .cal-warn { display: none; margin-top: 8px; font-size: 13px; color: #c0392b; font-weight: 600; text-align: center; }
+    .cal-summary-bar {
+      margin-top: 16px; padding: 14px 18px;
+      background: var(--color-surface-offset, #f5f5f3);
+      border-radius: 10px; border: 1px solid var(--color-border);
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap; min-height: 52px;
+    }
+    .summary-hint { font-size: 14px; color: var(--color-text-muted); }
+    .summary-info { font-size: 14px; color: var(--color-text); }
+    .summary-total { font-size: 22px; font-weight: 700; color: var(--color-primary); }
+    .summary-vat { font-size: 12px; color: var(--color-text-muted); }
+    .summary-fee { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+    .btn-clear { margin-left: auto; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-muted); font-size: 13px; cursor: pointer; }
+    .btn-clear:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+    .summary-fee strong {
+      color: var(--color-success, #437A22);
+      font-weight: 700;
+    }
+    .summary-deposit {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--color-border);
+      font-size: 13px;
+    }
+    .deposit-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 2px 0;
+      color: var(--color-text-muted);
+    }
+    .deposit-row strong { color: var(--color-text); }
   </style>
 </head>
 <body>
@@ -657,9 +703,10 @@
               <div class="cal-legend">
                 <div class="cal-legend-item"><div class="cal-legend-dot available"></div>Volný den</div>
                 <div class="cal-legend-item"><div class="cal-legend-dot occupied"></div>Obsazeno</div>
-                <div class="cal-legend-item"><div class="cal-legend-dot blocked"></div>Blokováno</div>
                 <div style="margin-left:auto; font-size:var(--text-sm); color:var(--color-text-muted);">ceny v Kč / noc, vč. DPH</div>
               </div>
+              <div class="cal-warn" id="calWarnL" style="display:none"></div>
+              <div class="cal-summary" id="calSummaryL" style="display:none"></div>
             </div>
 
           </div><!-- /apt-section liska -->
@@ -727,7 +774,6 @@
               <div class="cal-legend">
                 <div class="cal-legend-item"><div class="cal-legend-dot available"></div>Volný den</div>
                 <div class="cal-legend-item"><div class="cal-legend-dot occupied"></div>Obsazeno</div>
-                <div class="cal-legend-item"><div class="cal-legend-dot blocked"></div>Blokováno</div>
                 <div style="margin-left:auto; font-size:var(--text-sm); color:var(--color-text-muted);">ceny v Kč / noc, vč. DPH</div>
               </div>
             </div>
@@ -824,7 +870,6 @@
                 <div class="detail-sidebar-meta-row"><span>Hosté</span><span>až 4</span></div>
 <div class="detail-sidebar-meta-row"><span>Postele</span><span style="text-align:right">1× dvojlůžko<br>+ 1× rozkládací pohovka</span></div>
                 <div class="detail-sidebar-meta-row"><span>Koupelny</span><span>1</span></div>
-                <div class="detail-sidebar-meta-row"><span>Min. pobyt</span><span>2 noci</span></div>
                 <div class="detail-sidebar-meta-row"><span>Hodnocení</span><span>5,0 ★ (22 recenzí)</span></div>
               </div>
               <div class="detail-sidebar-rules">
@@ -832,6 +877,8 @@
                 <strong>Odjezd:</strong> do 11:00
               </div>
             </div>
+              <div class="cal-warn" id="calWarnJ"></div>
+              <div class="cal-summary" id="calSummaryJ" style="display:none"></div>
 
             <!-- Sidebar: Jelen -->
             <div class="detail-sidebar-card sidebar-hidden" id="sidebarJelen">
@@ -843,7 +890,6 @@
                 <div class="detail-sidebar-meta-row"><span>Ložnice</span><span>3</span></div>
                 <div class="detail-sidebar-meta-row"><span>Postele</span><span style="text-align:right">2× dvojlůžko<br>+ 2× jednolůžko</span></div>
                 <div class="detail-sidebar-meta-row"><span>Koupelny</span><span>3</span></div>
-                <div class="detail-sidebar-meta-row"><span>Min. pobyt</span><span style="color: #c0392b; font-weight: 600;">3 noci</span></div>
                 <div class="detail-sidebar-meta-row"><span>Hodnocení</span><span>5,0 ★ (8 recenzí)</span></div>
               </div>
               <div class="detail-sidebar-rules">
@@ -888,196 +934,438 @@
 
   <script src="script.js"></script>
 
-  <script>
-    // ── Kalendář dostupnosti – Liška (ID 3) ──
-    (function() {
-      const APARTMENT_ID = 3;
-      const API_BASE = 'https://hostmaster-production.up.railway.app/api/public/availability';
-      const CS_MONTHS = ['Leden','Únor','Březen','Duben','Květen','Červen',
-                         'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
-      const CS_DAYS = ['Po','Út','St','Čt','Pá','So','Ne'];
-      let calData = null;
-      let currentOffset = 0;
-      const MAX_OFFSET = 11;
+<script>
+// ── Kalendář Liška ──
+    const APARTMENT_ID_L = 3;
+    const LOCAL_FEE_L = 0;
+    const API_URL_L = `https://hostmaster-production.up.railway.app/api/public/availability/${APARTMENT_ID_L}`;
 
-      const today = new Date(); today.setHours(0,0,0,0);
+    let calDataL = null;
+    let calOffsetL = 0;
+    const MONTH_NAMES_L = ['Leden','Únor','Březen','Duben','Květen','Červen',
+                           'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+    const DOW_L = ['Po','Út','St','Čt','Pá','So','Ne'];
+    let selL = { start: null, end: null, hover: null };
 
-      async function fetchCalData() {
-        if (calData) return calData;
-        try {
-          const res = await fetch(`${API_BASE}/${APARTMENT_ID}`);
-          if (!res.ok) throw new Error(res.status);
-          calData = await res.json();
-        } catch(e) {
-          calData = { occupied: [], blocked: [], prices: [] };
-          console.warn('Kalendář Liška: nelze načíst data', e);
+    const padL = n => String(n).padStart(2,'0');
+    const todayStrL = (() => { const t = new Date(); t.setHours(0,0,0,0); return `${t.getFullYear()}-${padL(t.getMonth()+1)}-${padL(t.getDate())}`; })();
+    function dateFromStrL(s) { const [y,m,d] = s.split('-'); return new Date(+y,+m-1,+d); }
+    function fmtDateL(ds) { const d = dateFromStrL(ds); return `${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`; }
+    function addDaysL(ds, n) { const d = dateFromStrL(ds); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${padL(d.getMonth()+1)}-${padL(d.getDate())}`; }
+    function daysBetweenL(ds1, ds2) { return Math.round((dateFromStrL(ds2)-dateFromStrL(ds1))/86400000); }
+
+    function getStatusL(ds) {
+      if (!calDataL) return 'available';
+      if (calDataL.occupied && calDataL.occupied.includes(ds)) return 'occupied';
+      if (calDataL.blocked && calDataL.blocked.some(b => (b.date||b) === ds)) return 'occupied';
+      return 'available';
+    }
+    function getPriceL(ds) {
+      if (!calDataL || !calDataL.prices) return null;
+      const e = calDataL.prices.find(p => p.date === ds);
+      return e ? e.price : null;
+    }
+    function getMinStayL(ds) {
+      if (!calDataL || !calDataL.prices) return 1;
+      const e = calDataL.prices.find(p => p.date === ds);
+      return e ? (e.min_stay || 1) : 1;
+    }
+    function calcMinStayL(startDs, nights) {
+      let ms = 1;
+      for (let i = 0; i < nights; i++) ms = Math.max(ms, getMinStayL(addDaysL(startDs, i)));
+      return ms;
+    }
+
+    function renderMonthL(containerId, year, month) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES_L[month]} ${year}</span></div><div class="cal-grid">`;
+      DOW_L.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+      let dow = new Date(year, month, 1).getDay();
+      dow = dow === 0 ? 6 : dow - 1;
+      for (let i = 0; i < dow; i++) html += `<div class="cal-day empty"></div>`;
+      const days = new Date(year, month+1, 0).getDate();
+      for (let d = 1; d <= days; d++) {
+        const ds = `${year}-${padL(month+1)}-${padL(d)}`;
+        const past = ds < todayStrL;
+        const status = getStatusL(ds);
+        const price = getPriceL(ds);
+        const minStay = getMinStayL(ds);
+        const isOcc = (status === 'occupied');
+        const isStart = selL.start === ds;
+        const isEnd   = selL.end   === ds;
+        let inRange = false, invalidRange = false;
+        if (selL.start && !selL.end && selL.hover && selL.hover > selL.start && ds > selL.start && ds <= selL.hover) {
+          const nights = daysBetweenL(selL.start, selL.hover);
+          const ms = calcMinStayL(selL.start, nights);
+          if (nights < ms) invalidRange = true; else inRange = true;
+        } else if (selL.start && selL.end && ds > selL.start && ds < selL.end) {
+          inRange = true;
         }
-        return calData;
+        let cls = `cal-day ${past ? 'past' : isOcc ? 'occupied' : 'available'}`;
+        if (isStart) cls += ' selected-start';
+        if (isEnd)   cls += ' selected-end';
+        if (inRange) cls += ' in-range';
+        if (invalidRange) cls += ' invalid-range';
+        if (ds === todayStrL) cls += ' today';
+        const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
+        const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
+        html += `<div class="${cls}" data-ds="${ds}" data-apt="L"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
       }
+      html += '</div>';
+      container.innerHTML = html;
+    }
 
-      function dateStr(y, m, d) {
-        return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    function renderCalendarsL() {
+      const today = new Date();
+      const d0 = new Date(today.getFullYear(), today.getMonth() + calOffsetL, 1);
+      const d1 = new Date(today.getFullYear(), today.getMonth() + calOffsetL + 1, 1);
+      renderMonthL('calMonthL0', d0.getFullYear(), d0.getMonth());
+      renderMonthL('calMonthL1', d1.getFullYear(), d1.getMonth());
+      const prev = document.getElementById('calPrevL');
+      if (prev) prev.disabled = calOffsetL <= 0;
+      updateSummaryL();
+    }
+
+    function updateSummaryL() {
+      const el = document.getElementById('calSummaryL');
+      const warn = document.getElementById('calWarnL');
+      if (!el) return;
+      if (!selL.start) { el.style.display='none'; if(warn) warn.style.display='none'; return; }
+      el.style.display = 'flex';
+      if (!selL.end) {
+        el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Vyberte datum odjezdu</div><button class="btn-clear" onclick="resetSelL()">Zrušit výběr</button>`;
+        return;
       }
-
-      function renderMonth(containerId, year, month, data) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const occupied = new Set(data.occupied || []);
-        const blocked  = new Set((data.blocked || []).map(b => b.date || b));
-        const priceMap = {};
-        (data.prices || []).forEach(p => { priceMap[p.date] = p.price; });
-        const title = `${CS_MONTHS[month]} ${year}`;
-        const firstDay = new Date(year, month, 1).getDay();
-        const firstDayMon = (firstDay + 6) % 7;
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        let html = `<div class="cal-month-header"><button class="cal-nav" aria-label="Předchozí">‹</button><span class="cal-month-title">${title}</span><button class="cal-nav" aria-label="Další">›</button></div><div class="cal-grid">`;
-        CS_DAYS.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
-        for (let i = 0; i < firstDayMon; i++) { html += `<div class="cal-day empty"></div>`; }
-        for (let d = 1; d <= daysInMonth; d++) {
-          const ds = dateStr(year, month, d);
-          const dayDate = new Date(year, month, d);
-          let cls = 'cal-day';
-          if (dayDate < today) cls += ' past';
-          else if (occupied.has(ds)) cls += ' occupied';
-          else if (blocked.has(ds))  cls += ' blocked';
-          else cls += ' available';
-          if (dayDate.toDateString() === today.toDateString()) cls += ' today';
-          const price = priceMap[ds];
-          const priceHtml = price ? `<span class="day-price">${price.toLocaleString('cs-CZ')}</span>` : '';
-          html += `<div class="${cls}"><span class="day-num">${d}</span>${priceHtml}</div>`;
+      const nights = daysBetweenL(selL.start, selL.end);
+      const ms = calcMinStayL(selL.start, nights);
+      if (warn) {
+        if (nights < ms) {
+          warn.style.display = 'block';
+          warn.innerHTML = `<span class="warn-icon">⚠</span> Min ${ms} nocí v tomto termínu`;
+        } else {
+          warn.style.display = 'none';
         }
-        html += `</div>`;
-        container.innerHTML = html;
       }
-
-      function getCurrentMonths() {
-        const base = new Date();
-        return [0, 1].map((o, i) => {
-          const d = new Date(base.getFullYear(), base.getMonth() + currentOffset + o, 1);
-          return { year: d.getFullYear(), month: d.getMonth(), containerId: `calMonthL${i}` };
-        });
+      if (nights < ms) {
+        el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Minimální pobyt: ${ms} nocí</div><button class="btn-clear" onclick="resetSelL()">Zrušit výběr</button>`;
+        return;
       }
+      let total = 0;
+      for (let i = 0; i < nights; i++) total += (getPriceL(addDaysL(selL.start, i)) || 0);
+      const feeNote = LOCAL_FEE_L > 0 ? `<div class="summary-fee">+ Místní poplatek z pobytu <strong>${LOCAL_FEE_L} Kč</strong>/noc za dospělého hosta (účtováno zvlášť)</div>` : '';
+      const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total * 0.3).toLocaleString('cs-CZ')} Kč</strong></div><div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total * 0.7).toLocaleString('cs-CZ')} Kč</strong></div></div>`;
+      el.innerHTML = `<div style="flex:1"><div class="summary-info">Příjezd <strong>${fmtDateL(selL.start)}</strong> → Odjezd <strong>${fmtDateL(selL.end)}</strong> · <strong>${nights} nocí</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span><span class="summary-vat">vč. DPH</span></div>${feeNote}${deposit}</div><button class="btn-clear" onclick="resetSelL()">Zrušit</button>`;
+      prefillFormL();
+    }
 
-      function attachArrows() {
-        const prev = document.getElementById('calPrevL');
-        const next = document.getElementById('calNextL');
-        if (!prev || !next) return;
-        const newPrev = prev.cloneNode(true);
-        const newNext = next.cloneNode(true);
-        prev.replaceWith(newPrev);
-        next.replaceWith(newNext);
-        newPrev.disabled = currentOffset <= 0;
-        newNext.disabled = currentOffset >= MAX_OFFSET;
-        newPrev.addEventListener('click', () => { if (currentOffset > 0) { currentOffset--; renderCalendar(); } });
-        newNext.addEventListener('click', () => { if (currentOffset < MAX_OFFSET) { currentOffset++; renderCalendar(); } });
+    function handleClickL(ds) {
+      const status = getStatusL(ds);
+      if (status === 'occupied') return;
+      if (selL.start === ds && !selL.end) { selL = { start: null, end: null, hover: null }; renderCalendarsL(); return; }
+      if (selL.start && selL.end) { selL = { start: ds, end: null, hover: null }; renderCalendarsL(); return; }
+      if (!selL.start) { selL.start = ds; selL.end = null; selL.hover = null; renderCalendarsL(); return; }
+      if (ds <= selL.start) { selL.start = ds; selL.end = null; selL.hover = null; }
+      else {
+        let hasOcc = false;
+        for (let d = addDaysL(selL.start,1); d < ds; d = addDaysL(d,1)) {
+          if (getStatusL(d) === 'occupied') { hasOcc = true; break; }
+        }
+        if (hasOcc) { selL = { start: ds, end: null, hover: null }; }
+        else { selL.end = ds; selL.hover = null; }
       }
+      renderCalendarsL();
+    }
 
-      async function renderCalendar() {
-        document.getElementById('calMonthL0').innerHTML = '<div class="cal-loading">Načítám…</div>';
-        document.getElementById('calMonthL1').innerHTML = '';
-        const data = await fetchCalData();
-        getCurrentMonths().forEach(m => renderMonth(m.containerId, m.year, m.month, data));
-        attachArrows();
+    function handleHoverL(ds) {
+      if (!selL.start || selL.end) return;
+      selL.hover = ds;
+      renderCalendarsL();
+    }
+
+    function handleHoverEndL() {
+      if (!selL.start || selL.end) return;
+      selL.hover = null;
+      renderCalendarsL();
+    }
+
+    function resetSelL() {
+      selL = { start: null, end: null, hover: null };
+      renderCalendarsL();
+      clearFormPrefillL();
+    }
+
+    function prefillFormL() {
+      if (!selL.start || !selL.end) return;
+      const fromField = document.getElementById('cf-from');
+      const toField   = document.getElementById('cf-to');
+      if (fromField) fromField.value = selL.start;
+      if (toField)   toField.value   = selL.end;
+    }
+
+    function clearFormPrefillL() {
+      const fromField = document.getElementById('cf-from');
+      const toField   = document.getElementById('cf-to');
+      if (fromField) fromField.value = '';
+      if (toField)   toField.value   = '';
+    }
+
+    async function loadCalDataL() {
+      try {
+        const from = todayStrL;
+        const to = addDaysL(todayStrL, 365);
+        const res = await fetch(`${API_URL_L}?from=${from}&to=${to}`);
+        calDataL = await res.json();
+        renderCalendarsL();
+      } catch(e) {
+        console.error('Chyba načítání kalendáře Liška:', e);
       }
+    }
 
-      renderCalendar();
-    })();
+    document.addEventListener('click', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day) return;
+      if (!day.closest('#calOuterL')) return;
+      if (day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
+      handleClickL(day.dataset.ds);
+    });
+    document.addEventListener('mouseover', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day || !day.closest('#calOuterL')) return;
+      handleHoverL(day.dataset.ds);
+    });
+    document.addEventListener('mouseout', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day || !day.closest('#calOuterL')) return;
+      if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEndL();
+    });
+
+    document.getElementById('calPrevL').addEventListener('click', () => {
+      if (calOffsetL > 0) { calOffsetL--; renderCalendarsL(); }
+    });
+    document.getElementById('calNextL').addEventListener('click', () => {
+      calOffsetL++; renderCalendarsL();
+    });
+
+    loadCalDataL();
+
   </script>
 
   <script>
-    // ── Kalendář dostupnosti – Jelen (ID 4) ──
-    (function() {
-      const APARTMENT_ID = 4;
-      const API_BASE = 'https://hostmaster-production.up.railway.app/api/public/availability';
-      const CS_MONTHS = ['Leden','Únor','Březen','Duben','Květen','Červen',
-                         'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
-      const CS_DAYS = ['Po','Út','St','Čt','Pá','So','Ne'];
-      let calData = null;
-      let currentOffset = 0;
-      const MAX_OFFSET = 11;
+// ── Kalendář Jelen ──
+    const APARTMENT_ID_J = 4;
+    const LOCAL_FEE_J = 0;
+    const API_URL_J = `https://hostmaster-production.up.railway.app/api/public/availability/${APARTMENT_ID_J}`;
 
-      const today = new Date(); today.setHours(0,0,0,0);
+    let calDataJ = null;
+    let calOffsetJ = 0;
+    const MONTH_NAMES_J = ['Leden','Únor','Březen','Duben','Květen','Červen',
+                           'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+    const DOW_J = ['Po','Út','St','Čt','Pá','So','Ne'];
+    let selJ = { start: null, end: null, hover: null };
 
-      async function fetchCalData() {
-        if (calData) return calData;
-        try {
-          const res = await fetch(`${API_BASE}/${APARTMENT_ID}`);
-          if (!res.ok) throw new Error(res.status);
-          calData = await res.json();
-        } catch(e) {
-          calData = { occupied: [], blocked: [], prices: [] };
-          console.warn('Kalendář Jelen: nelze načíst data', e);
+    const padJ = n => String(n).padStart(2,'0');
+    const todayStrJ = (() => { const t = new Date(); t.setHours(0,0,0,0); return `${t.getFullYear()}-${padJ(t.getMonth()+1)}-${padJ(t.getDate())}`; })();
+    function dateFromStrJ(s) { const [y,m,d] = s.split('-'); return new Date(+y,+m-1,+d); }
+    function fmtDateJ(ds) { const d = dateFromStrJ(ds); return `${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`; }
+    function addDaysJ(ds, n) { const d = dateFromStrJ(ds); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${padJ(d.getMonth()+1)}-${padJ(d.getDate())}`; }
+    function daysBetweenJ(ds1, ds2) { return Math.round((dateFromStrJ(ds2)-dateFromStrJ(ds1))/86400000); }
+
+    function getStatusJ(ds) {
+      if (!calDataJ) return 'available';
+      if (calDataJ.occupied && calDataJ.occupied.includes(ds)) return 'occupied';
+      if (calDataJ.blocked && calDataJ.blocked.some(b => (b.date||b) === ds)) return 'occupied';
+      return 'available';
+    }
+    function getPriceJ(ds) {
+      if (!calDataJ || !calDataJ.prices) return null;
+      const e = calDataJ.prices.find(p => p.date === ds);
+      return e ? e.price : null;
+    }
+    function getMinStayJ(ds) {
+      if (!calDataJ || !calDataJ.prices) return 1;
+      const e = calDataJ.prices.find(p => p.date === ds);
+      return e ? (e.min_stay || 1) : 1;
+    }
+    function calcMinStayJ(startDs, nights) {
+      let ms = 1;
+      for (let i = 0; i < nights; i++) ms = Math.max(ms, getMinStayJ(addDaysJ(startDs, i)));
+      return ms;
+    }
+
+    function renderMonthJ(containerId, year, month) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES_J[month]} ${year}</span></div><div class="cal-grid">`;
+      DOW_J.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+      let dow = new Date(year, month, 1).getDay();
+      dow = dow === 0 ? 6 : dow - 1;
+      for (let i = 0; i < dow; i++) html += `<div class="cal-day empty"></div>`;
+      const days = new Date(year, month+1, 0).getDate();
+      for (let d = 1; d <= days; d++) {
+        const ds = `${year}-${padJ(month+1)}-${padJ(d)}`;
+        const past = ds < todayStrJ;
+        const status = getStatusJ(ds);
+        const price = getPriceJ(ds);
+        const minStay = getMinStayJ(ds);
+        const isOcc = (status === 'occupied');
+        const isStart = selJ.start === ds;
+        const isEnd   = selJ.end   === ds;
+        let inRange = false, invalidRange = false;
+        if (selJ.start && !selJ.end && selJ.hover && selJ.hover > selJ.start && ds > selJ.start && ds <= selJ.hover) {
+          const nights = daysBetweenJ(selJ.start, selJ.hover);
+          const ms = calcMinStayJ(selJ.start, nights);
+          if (nights < ms) invalidRange = true; else inRange = true;
+        } else if (selJ.start && selJ.end && ds > selJ.start && ds < selJ.end) {
+          inRange = true;
         }
-        return calData;
+        let cls = `cal-day ${past ? 'past' : isOcc ? 'occupied' : 'available'}`;
+        if (isStart) cls += ' selected-start';
+        if (isEnd)   cls += ' selected-end';
+        if (inRange) cls += ' in-range';
+        if (invalidRange) cls += ' invalid-range';
+        if (ds === todayStrJ) cls += ' today';
+        const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
+        const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
+        html += `<div class="${cls}" data-ds="${ds}" data-apt="J"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
       }
+      html += '</div>';
+      container.innerHTML = html;
+    }
 
-      function dateStr(y, m, d) {
-        return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    function renderCalendarsJ() {
+      const today = new Date();
+      const d0 = new Date(today.getFullYear(), today.getMonth() + calOffsetJ, 1);
+      const d1 = new Date(today.getFullYear(), today.getMonth() + calOffsetJ + 1, 1);
+      renderMonthJ('calMonthJ0', d0.getFullYear(), d0.getMonth());
+      renderMonthJ('calMonthJ1', d1.getFullYear(), d1.getMonth());
+      const prev = document.getElementById('calPrevJ');
+      if (prev) prev.disabled = calOffsetJ <= 0;
+      updateSummaryJ();
+    }
+
+    function updateSummaryJ() {
+      const el = document.getElementById('calSummaryJ');
+      const warn = document.getElementById('calWarnJ');
+      if (!el) return;
+      if (!selJ.start) { el.style.display='none'; if(warn) warn.style.display='none'; return; }
+      el.style.display = 'flex';
+      if (!selJ.end) {
+        el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Vyberte datum odjezdu</div><button class="btn-clear" onclick="resetSelJ()">Zrušit výběr</button>`;
+        return;
       }
-
-      function renderMonth(containerId, year, month, data) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const occupied = new Set(data.occupied || []);
-        const blocked  = new Set((data.blocked || []).map(b => b.date || b));
-        const priceMap = {};
-        (data.prices || []).forEach(p => { priceMap[p.date] = p.price; });
-        const title = `${CS_MONTHS[month]} ${year}`;
-        const firstDay = new Date(year, month, 1).getDay();
-        const firstDayMon = (firstDay + 6) % 7;
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        let html = `<div class="cal-month-header"><button class="cal-nav" aria-label="Předchozí">‹</button><span class="cal-month-title">${title}</span><button class="cal-nav" aria-label="Další">›</button></div><div class="cal-grid">`;
-        CS_DAYS.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
-        for (let i = 0; i < firstDayMon; i++) { html += `<div class="cal-day empty"></div>`; }
-        for (let d = 1; d <= daysInMonth; d++) {
-          const ds = dateStr(year, month, d);
-          const dayDate = new Date(year, month, d);
-          let cls = 'cal-day';
-          if (dayDate < today) cls += ' past';
-          else if (occupied.has(ds)) cls += ' occupied';
-          else if (blocked.has(ds))  cls += ' blocked';
-          else cls += ' available';
-          if (dayDate.toDateString() === today.toDateString()) cls += ' today';
-          const price = priceMap[ds];
-          const priceHtml = price ? `<span class="day-price">${price.toLocaleString('cs-CZ')}</span>` : '';
-          html += `<div class="${cls}"><span class="day-num">${d}</span>${priceHtml}</div>`;
+      const nights = daysBetweenJ(selJ.start, selJ.end);
+      const ms = calcMinStayJ(selJ.start, nights);
+      if (warn) {
+        if (nights < ms) {
+          warn.style.display = 'block';
+          warn.innerHTML = `<span class="warn-icon">⚠</span> Min ${ms} nocí v tomto termínu`;
+        } else {
+          warn.style.display = 'none';
         }
-        html += `</div>`;
-        container.innerHTML = html;
       }
-
-      function getCurrentMonths() {
-        const base = new Date();
-        return [0, 1].map((o, i) => {
-          const d = new Date(base.getFullYear(), base.getMonth() + currentOffset + o, 1);
-          return { year: d.getFullYear(), month: d.getMonth(), containerId: `calMonthJ${i}` };
-        });
+      if (nights < ms) {
+        el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Minimální pobyt: ${ms} nocí</div><button class="btn-clear" onclick="resetSelJ()">Zrušit výběr</button>`;
+        return;
       }
+      let total = 0;
+      for (let i = 0; i < nights; i++) total += (getPriceJ(addDaysJ(selJ.start, i)) || 0);
+      const feeNote = LOCAL_FEE_J > 0 ? `<div class="summary-fee">+ Místní poplatek z pobytu <strong>${LOCAL_FEE_J} Kč</strong>/noc za dospělého hosta (účtováno zvlášť)</div>` : '';
+      const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total * 0.3).toLocaleString('cs-CZ')} Kč</strong></div><div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total * 0.7).toLocaleString('cs-CZ')} Kč</strong></div></div>`;
+      el.innerHTML = `<div style="flex:1"><div class="summary-info">Příjezd <strong>${fmtDateJ(selJ.start)}</strong> → Odjezd <strong>${fmtDateJ(selJ.end)}</strong> · <strong>${nights} nocí</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span><span class="summary-vat">vč. DPH</span></div>${feeNote}${deposit}</div><button class="btn-clear" onclick="resetSelJ()">Zrušit</button>`;
+      prefillFormJ();
+    }
 
-      function attachArrows() {
-        const prev = document.getElementById('calPrevJ');
-        const next = document.getElementById('calNextJ');
-        if (!prev || !next) return;
-        const newPrev = prev.cloneNode(true);
-        const newNext = next.cloneNode(true);
-        prev.replaceWith(newPrev);
-        next.replaceWith(newNext);
-        newPrev.disabled = currentOffset <= 0;
-        newNext.disabled = currentOffset >= MAX_OFFSET;
-        newPrev.addEventListener('click', () => { if (currentOffset > 0) { currentOffset--; renderCalendar(); } });
-        newNext.addEventListener('click', () => { if (currentOffset < MAX_OFFSET) { currentOffset++; renderCalendar(); } });
+    function handleClickJ(ds) {
+      const status = getStatusJ(ds);
+      if (status === 'occupied') return;
+      if (selJ.start === ds && !selJ.end) { selJ = { start: null, end: null, hover: null }; renderCalendarsJ(); return; }
+      if (selJ.start && selJ.end) { selJ = { start: ds, end: null, hover: null }; renderCalendarsJ(); return; }
+      if (!selJ.start) { selJ.start = ds; selJ.end = null; selJ.hover = null; renderCalendarsJ(); return; }
+      if (ds <= selJ.start) { selJ.start = ds; selJ.end = null; selJ.hover = null; }
+      else {
+        let hasOcc = false;
+        for (let d = addDaysJ(selJ.start,1); d < ds; d = addDaysJ(d,1)) {
+          if (getStatusJ(d) === 'occupied') { hasOcc = true; break; }
+        }
+        if (hasOcc) { selJ = { start: ds, end: null, hover: null }; }
+        else { selJ.end = ds; selJ.hover = null; }
       }
+      renderCalendarsJ();
+    }
 
-      async function renderCalendar() {
-        document.getElementById('calMonthJ0').innerHTML = '<div class="cal-loading">Načítám…</div>';
-        document.getElementById('calMonthJ1').innerHTML = '';
-        const data = await fetchCalData();
-        getCurrentMonths().forEach(m => renderMonth(m.containerId, m.year, m.month, data));
-        attachArrows();
+    function handleHoverJ(ds) {
+      if (!selJ.start || selJ.end) return;
+      selJ.hover = ds;
+      renderCalendarsJ();
+    }
+
+    function handleHoverEndJ() {
+      if (!selJ.start || selJ.end) return;
+      selJ.hover = null;
+      renderCalendarsJ();
+    }
+
+    function resetSelJ() {
+      selJ = { start: null, end: null, hover: null };
+      renderCalendarsJ();
+      clearFormPrefillJ();
+    }
+
+    function prefillFormJ() {
+      if (!selJ.start || !selJ.end) return;
+      const fromField = document.getElementById('cf-from');
+      const toField   = document.getElementById('cf-to');
+      if (fromField) fromField.value = selJ.start;
+      if (toField)   toField.value   = selJ.end;
+    }
+
+    function clearFormPrefillJ() {
+      const fromField = document.getElementById('cf-from');
+      const toField   = document.getElementById('cf-to');
+      if (fromField) fromField.value = '';
+      if (toField)   toField.value   = '';
+    }
+
+    async function loadCalDataJ() {
+      try {
+        const from = todayStrJ;
+        const to = addDaysJ(todayStrJ, 365);
+        const res = await fetch(`${API_URL_J}?from=${from}&to=${to}`);
+        calDataJ = await res.json();
+        renderCalendarsJ();
+      } catch(e) {
+        console.error('Chyba načítání kalendáře Jelen:', e);
       }
+    }
 
-      renderCalendar();
-    })();
+    document.addEventListener('click', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day) return;
+      if (!day.closest('#calOuterJ')) return;
+      if (day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
+      handleClickJ(day.dataset.ds);
+    });
+    document.addEventListener('mouseover', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day || !day.closest('#calOuterJ')) return;
+      handleHoverJ(day.dataset.ds);
+    });
+    document.addEventListener('mouseout', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day || !day.closest('#calOuterJ')) return;
+      if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEndJ();
+    });
+
+    document.getElementById('calPrevJ').addEventListener('click', () => {
+      if (calOffsetJ > 0) { calOffsetJ--; renderCalendarsJ(); }
+    });
+    document.getElementById('calNextJ').addEventListener('click', () => {
+      calOffsetJ++; renderCalendarsJ();
+    });
+
+    loadCalDataJ();
+
   </script>
 
   <script>
