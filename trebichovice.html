@@ -935,425 +935,341 @@
   <script src="script.js"></script>
 
 <script>
-// ── Kalendář Liška ──
-    const APARTMENT_ID_L = 3;
-    const LOCAL_FEE_L = 0;
-    const API_URL_L = `https://hostmaster-production.up.railway.app/api/public/availability/${APARTMENT_ID_L}`;
+// ── Kalendář Třebichovice (Liška + Jelen) ──
 
-    let calDataL = null;
-    let calOffsetL = 0;
-    const MONTH_NAMES_L = ['Leden','Únor','Březen','Duben','Květen','Červen',
-                           'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
-    const DOW_L = ['Po','Út','St','Čt','Pá','So','Ne'];
-    let selL = { start: null, end: null, hover: null };
+// ── Sdílené konstanty ──
+const MONTH_NAMES = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+const DOW = ['Po','Út','St','Čt','Pá','So','Ne'];
+const pad = n => String(n).padStart(2,'0');
+function dateFromStr(s) { const [y,m,d] = s.split('-'); return new Date(+y,+m-1,+d); }
+function fmtDate(ds) { const d = dateFromStr(ds); return `${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`; }
+function addDays(ds, n) { const d = dateFromStr(ds); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function daysBetween(ds1, ds2) { return Math.round((dateFromStr(ds2)-dateFromStr(ds1))/86400000); }
+const todayStr = (() => { const t = new Date(); t.setHours(0,0,0,0); return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`; })();
 
-    const padL = n => String(n).padStart(2,'0');
-    const todayStrL = (() => { const t = new Date(); t.setHours(0,0,0,0); return `${t.getFullYear()}-${padL(t.getMonth()+1)}-${padL(t.getDate())}`; })();
-    function dateFromStrL(s) { const [y,m,d] = s.split('-'); return new Date(+y,+m-1,+d); }
-    function fmtDateL(ds) { const d = dateFromStrL(ds); return `${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`; }
-    function addDaysL(ds, n) { const d = dateFromStrL(ds); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${padL(d.getMonth()+1)}-${padL(d.getDate())}`; }
-    function daysBetweenL(ds1, ds2) { return Math.round((dateFromStrL(ds2)-dateFromStrL(ds1))/86400000); }
+// ══════════════════════════════════════════
+// LIŠKA (ID=3)
+// ══════════════════════════════════════════
+const APT_L = 3;
+const API_L = `https://hostmaster-production.up.railway.app/api/public/availability/${APT_L}`;
+let dataL = null, offsetL = 0, selL = { start: null, end: null, hover: null };
 
-    function getStatusL(ds) {
-      if (!calDataL) return 'available';
-      if (calDataL.occupied && calDataL.occupied.includes(ds)) return 'occupied';
-      if (calDataL.blocked && calDataL.blocked.some(b => (b.date||b) === ds)) return 'occupied';
-      return 'available';
-    }
-    function getPriceL(ds) {
-      if (!calDataL || !calDataL.prices) return null;
-      const e = calDataL.prices.find(p => p.date === ds);
-      return e ? e.price : null;
-    }
-    function getMinStayL(ds) {
-      if (!calDataL || !calDataL.prices) return 1;
-      const e = calDataL.prices.find(p => p.date === ds);
-      return e ? (e.min_stay || 1) : 1;
-    }
-    function calcMinStayL(startDs, nights) {
-      let ms = 1;
-      for (let i = 0; i < nights; i++) ms = Math.max(ms, getMinStayL(addDaysL(startDs, i)));
-      return ms;
-    }
+function getStatusL(ds) {
+  if (!dataL) return 'available';
+  if (dataL.occupied && dataL.occupied.includes(ds)) return 'occupied';
+  if (dataL.blocked && dataL.blocked.some(b => (b.date||b) === ds)) return 'occupied';
+  return 'available';
+}
+function getPriceL(ds) {
+  if (!dataL || !dataL.prices) return null;
+  const e = dataL.prices.find(p => p.date === ds);
+  return e ? e.price : null;
+}
+function getMinStayL(ds) {
+  if (!dataL || !dataL.prices) return 1;
+  const e = dataL.prices.find(p => p.date === ds);
+  return e ? (e.min_stay || 1) : 1;
+}
+function calcMinStayL(start, nights) {
+  let ms = 1;
+  for (let i = 0; i < nights; i++) { const m = getMinStayL(addDays(start, i)); if (m > ms) ms = m; }
+  return ms;
+}
 
-    function renderMonthL(containerId, year, month) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES_L[month]} ${year}</span></div><div class="cal-grid">`;
-      DOW_L.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
-      let dow = new Date(year, month, 1).getDay();
-      dow = dow === 0 ? 6 : dow - 1;
-      for (let i = 0; i < dow; i++) html += `<div class="cal-day empty"></div>`;
-      const days = new Date(year, month+1, 0).getDate();
-      for (let d = 1; d <= days; d++) {
-        const ds = `${year}-${padL(month+1)}-${padL(d)}`;
-        const past = ds < todayStrL;
-        const status = getStatusL(ds);
-        const price = getPriceL(ds);
-        const minStay = getMinStayL(ds);
-        const isOcc = (status === 'occupied');
-        const isStart = selL.start === ds;
-        const isEnd   = selL.end   === ds;
-        let inRange = false, invalidRange = false;
-        if (selL.start && !selL.end && selL.hover && selL.hover > selL.start && ds > selL.start && ds <= selL.hover) {
-          const nights = daysBetweenL(selL.start, selL.hover);
-          const ms = calcMinStayL(selL.start, nights);
-          if (nights < ms) invalidRange = true; else inRange = true;
-        } else if (selL.start && selL.end && ds > selL.start && ds < selL.end) {
-          inRange = true;
-        }
-        let cls = `cal-day ${past ? 'past' : isOcc ? 'occupied' : 'available'}`;
-        if (isStart) cls += ' selected-start';
-        if (isEnd)   cls += ' selected-end';
-        if (inRange) cls += ' in-range';
-        if (invalidRange) cls += ' invalid-range';
-        if (ds === todayStrL) cls += ' today';
-        const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
-        const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
-        html += `<div class="${cls}" data-ds="${ds}" data-apt="L"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
-      }
-      html += '</div>';
-      container.innerHTML = html;
-    }
-
-    function renderCalendarsL() {
-      const today = new Date();
-      const d0 = new Date(today.getFullYear(), today.getMonth() + calOffsetL, 1);
-      const d1 = new Date(today.getFullYear(), today.getMonth() + calOffsetL + 1, 1);
-      renderMonthL('calMonthL0', d0.getFullYear(), d0.getMonth());
-      renderMonthL('calMonthL1', d1.getFullYear(), d1.getMonth());
-      const prev = document.getElementById('calPrevL');
-      if (prev) prev.disabled = calOffsetL <= 0;
-      updateSummaryL();
-    }
-
-    function updateSummaryL() {
-      const el = document.getElementById('calSummaryL');
-      const warn = document.getElementById('calWarnL');
-      if (!el) return;
-      if (!selL.start) { el.style.display='none'; if(warn) warn.style.display='none'; return; }
-      el.style.display = 'flex';
-      if (!selL.end) {
-        el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Vyberte datum odjezdu</div><button class="btn-clear" onclick="resetSelL()">Zrušit výběr</button>`;
-        return;
-      }
-      const nights = daysBetweenL(selL.start, selL.end);
+function renderMonthL(containerId, year, month) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES[month]} ${year}</span></div><div class="cal-grid">`;
+  DOW.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+  let dow = new Date(year, month, 1).getDay(); dow = dow === 0 ? 6 : dow - 1;
+  for (let i = 0; i < dow; i++) html += `<div class="cal-day empty"></div>`;
+  const days = new Date(year, month+1, 0).getDate();
+  for (let d = 1; d <= days; d++) {
+    const ds = `${year}-${pad(month+1)}-${pad(d)}`;
+    const past = ds < todayStr;
+    const isOcc = getStatusL(ds) === 'occupied';
+    const isStart = selL.start === ds, isEnd = selL.end === ds;
+    let inRange = false, invalidRange = false;
+    if (selL.start && !selL.end && selL.hover && selL.hover > selL.start && ds > selL.start && ds <= selL.hover) {
+      const nights = daysBetween(selL.start, selL.hover);
       const ms = calcMinStayL(selL.start, nights);
-      if (warn) {
-        if (nights < ms) {
-          warn.style.display = 'block';
-          warn.innerHTML = `<span class="warn-icon">⚠</span> Min ${ms} nocí v tomto termínu`;
-        } else {
-          warn.style.display = 'none';
-        }
-      }
-      if (nights < ms) {
-        el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Minimální pobyt: ${ms} nocí</div><button class="btn-clear" onclick="resetSelL()">Zrušit výběr</button>`;
-        return;
-      }
-      let total = 0;
-      for (let i = 0; i < nights; i++) total += (getPriceL(addDaysL(selL.start, i)) || 0);
-      const feeNote = LOCAL_FEE_L > 0 ? `<div class="summary-fee">+ Místní poplatek z pobytu <strong>${LOCAL_FEE_L} Kč</strong>/noc za dospělého hosta (účtováno zvlášť)</div>` : '';
-      const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total * 0.3).toLocaleString('cs-CZ')} Kč</strong></div><div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total * 0.7).toLocaleString('cs-CZ')} Kč</strong></div></div>`;
-      el.innerHTML = `<div style="flex:1"><div class="summary-info">Příjezd <strong>${fmtDateL(selL.start)}</strong> → Odjezd <strong>${fmtDateL(selL.end)}</strong> · <strong>${nights} nocí</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span><span class="summary-vat">vč. DPH</span></div>${feeNote}${deposit}</div><button class="btn-clear" onclick="resetSelL()">Zrušit</button>`;
-      prefillFormL();
+      if (nights < ms) invalidRange = true; else inRange = true;
+    } else if (selL.start && selL.end && ds > selL.start && ds < selL.end) { inRange = true; }
+    let cls = `cal-day ${past ? 'past' : isOcc ? 'occupied' : 'available'}`;
+    if (isStart) cls += ' selected-start';
+    if (isEnd) cls += ' selected-end';
+    if (inRange) cls += ' in-range';
+    if (invalidRange) cls += ' invalid-range';
+    if (ds === todayStr) cls += ' today';
+    const price = getPriceL(ds);
+    const minStay = getMinStayL(ds);
+    const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
+    const minHtml = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
+    html += `<div class="${cls}" data-ds="${ds}"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function attachListenersL() {
+  document.querySelectorAll('#calOuterL .cal-day[data-ds]').forEach(day => {
+    if (day.classList.contains('past') || day.classList.contains('occupied') || day.classList.contains('empty')) return;
+    day.addEventListener('click', () => handleClickL(day.dataset.ds));
+    day.addEventListener('mouseover', () => handleHoverL(day.dataset.ds));
+    day.addEventListener('mouseout', () => handleHoverEndL());
+  });
+}
+
+function renderCalendarsL() {
+  const today = new Date();
+  const d0 = new Date(today.getFullYear(), today.getMonth() + offsetL, 1);
+  const d1 = new Date(today.getFullYear(), today.getMonth() + offsetL + 1, 1);
+  renderMonthL('calMonthL0', d0.getFullYear(), d0.getMonth());
+  renderMonthL('calMonthL1', d1.getFullYear(), d1.getMonth());
+  document.getElementById('calPrevL').disabled = offsetL <= 0;
+  attachListenersL();
+  updateSummaryL();
+}
+
+function handleClickL(ds) {
+  if (getStatusL(ds) === 'occupied') return;
+  if (selL.start === ds && !selL.end) { selL = { start: null, end: null, hover: null }; renderCalendarsL(); return; }
+  if (selL.start && selL.end) { selL = { start: ds, end: null, hover: null }; renderCalendarsL(); return; }
+  if (!selL.start) { selL.start = ds; selL.end = null; selL.hover = null; renderCalendarsL(); return; }
+  if (ds <= selL.start) { selL.start = ds; selL.end = null; selL.hover = null; }
+  else {
+    let hasOcc = false;
+    for (let d = addDays(selL.start, 1); d < ds; d = addDays(d, 1)) { if (getStatusL(d) === 'occupied') { hasOcc = true; break; } }
+    if (hasOcc) { selL = { start: ds, end: null, hover: null }; }
+    else { selL.end = ds; selL.hover = null; }
+  }
+  renderCalendarsL();
+}
+
+function handleHoverL(ds) {
+  if (selL.start && !selL.end && ds !== selL.hover) {
+    selL.hover = ds;
+    renderCalendarsL();
+    const warn = document.getElementById('calWarnL');
+    if (warn && ds > selL.start) {
+      const nights = daysBetween(selL.start, ds);
+      const ms = calcMinStayL(selL.start, nights);
+      if (nights < ms) { warn.textContent = `⚠ Min ${ms} nocí — přidejte ${ms-nights} ${ms-nights===1?'noc':'noci'}`; warn.style.display = 'block'; }
+      else { warn.style.display = 'none'; }
     }
+  }
+}
 
-    function handleClickL(ds) {
-      const status = getStatusL(ds);
-      if (status === 'occupied') return;
-      if (selL.start === ds && !selL.end) { selL = { start: null, end: null, hover: null }; renderCalendarsL(); return; }
-      if (selL.start && selL.end) { selL = { start: ds, end: null, hover: null }; renderCalendarsL(); return; }
-      if (!selL.start) { selL.start = ds; selL.end = null; selL.hover = null; renderCalendarsL(); return; }
-      if (ds <= selL.start) { selL.start = ds; selL.end = null; selL.hover = null; }
-      else {
-        let hasOcc = false;
-        for (let d = addDaysL(selL.start,1); d < ds; d = addDaysL(d,1)) {
-          if (getStatusL(d) === 'occupied') { hasOcc = true; break; }
-        }
-        if (hasOcc) { selL = { start: ds, end: null, hover: null }; }
-        else { selL.end = ds; selL.hover = null; }
-      }
-      renderCalendarsL();
-    }
+function handleHoverEndL() {
+  if (selL.hover) { selL.hover = null; renderCalendarsL(); }
+  const warn = document.getElementById('calWarnL');
+  if (warn) warn.style.display = 'none';
+}
 
-    function handleHoverL(ds) {
-      if (!selL.start || selL.end) return;
-      selL.hover = ds;
-      renderCalendarsL();
-    }
+function updateSummaryL() {
+  const el = document.getElementById('calSummaryL');
+  if (!el) return;
+  if (!selL.start) { el.style.display='none'; return; }
+  el.style.display = 'flex';
+  if (!selL.end) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Vyberte datum odjezdu</div><button class="btn-clear" onclick="resetSelL()">Zrušit výběr</button>`; return; }
+  const nights = daysBetween(selL.start, selL.end);
+  const ms = calcMinStayL(selL.start, nights);
+  if (nights < ms) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Min. pobyt: ${ms} nocí</div><button class="btn-clear" onclick="resetSelL()">Zrušit výběr</button>`; return; }
+  let total = 0;
+  for (let i = 0; i < nights; i++) total += (getPriceL(addDays(selL.start, i)) || 0);
+  const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total*0.3).toLocaleString('cs-CZ')} Kč</strong></div><div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total*0.7).toLocaleString('cs-CZ')} Kč</strong></div></div>`;
+  el.innerHTML = `<div style="flex:1"><div class="summary-info">Příjezd <strong>${fmtDate(selL.start)}</strong> → Odjezd <strong>${fmtDate(selL.end)}</strong> · <strong>${nights} nocí</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span><span class="summary-vat">vč. DPH</span></div>${deposit}</div><button class="btn-clear" onclick="resetSelL()">Zrušit</button>`;
+  prefillFormL();
+}
 
-    function handleHoverEndL() {
-      if (!selL.start || selL.end) return;
-      selL.hover = null;
-      renderCalendarsL();
-    }
+function resetSelL() { selL = { start: null, end: null, hover: null }; renderCalendarsL(); clearFormL(); }
+function prefillFormL() {
+  if (!selL.start || !selL.end) return;
+  const f = document.getElementById('cf-from-l'), t = document.getElementById('cf-to-l');
+  if (f) f.value = selL.start; if (t) t.value = selL.end;
+}
+function clearFormL() {
+  const f = document.getElementById('cf-from-l'), t = document.getElementById('cf-to-l');
+  if (f) f.value = ''; if (t) t.value = '';
+}
 
-    function resetSelL() {
-      selL = { start: null, end: null, hover: null };
-      renderCalendarsL();
-      clearFormPrefillL();
-    }
+document.getElementById('calPrevL').addEventListener('click', () => { if (offsetL > 0) { offsetL--; renderCalendarsL(); } });
+document.getElementById('calNextL').addEventListener('click', () => { offsetL++; renderCalendarsL(); });
 
-    function prefillFormL() {
-      if (!selL.start || !selL.end) return;
-      const fromField = document.getElementById('cf-from');
-      const toField   = document.getElementById('cf-to');
-      if (fromField) fromField.value = selL.start;
-      if (toField)   toField.value   = selL.end;
-    }
+async function loadCalDataL() {
+  try {
+    const from = todayStr;
+    const to = addDays(todayStr, 365);
+    const res = await fetch(`${API_L}?from=${from}&to=${to}`);
+    dataL = await res.json();
+    renderCalendarsL();
+  } catch(e) { console.error('Chyba Liška:', e); }
+}
 
-    function clearFormPrefillL() {
-      const fromField = document.getElementById('cf-from');
-      const toField   = document.getElementById('cf-to');
-      if (fromField) fromField.value = '';
-      if (toField)   toField.value   = '';
-    }
+// ══════════════════════════════════════════
+// JELEN (ID=4)
+// ══════════════════════════════════════════
+const APT_J = 4;
+const API_J = `https://hostmaster-production.up.railway.app/api/public/availability/${APT_J}`;
+let dataJ = null, offsetJ = 0, selJ = { start: null, end: null, hover: null };
 
-    async function loadCalDataL() {
-      try {
-        const from = todayStrL;
-        const to = addDaysL(todayStrL, 365);
-        const res = await fetch(`${API_URL_L}?from=${from}&to=${to}`);
-        calDataL = await res.json();
-        renderCalendarsL();
-      } catch(e) {
-        console.error('Chyba načítání kalendáře Liška:', e);
-      }
-    }
+function getStatusJ(ds) {
+  if (!dataJ) return 'available';
+  if (dataJ.occupied && dataJ.occupied.includes(ds)) return 'occupied';
+  if (dataJ.blocked && dataJ.blocked.some(b => (b.date||b) === ds)) return 'occupied';
+  return 'available';
+}
+function getPriceJ(ds) {
+  if (!dataJ || !dataJ.prices) return null;
+  const e = dataJ.prices.find(p => p.date === ds);
+  return e ? e.price : null;
+}
+function getMinStayJ(ds) {
+  if (!dataJ || !dataJ.prices) return 1;
+  const e = dataJ.prices.find(p => p.date === ds);
+  return e ? (e.min_stay || 1) : 1;
+}
+function calcMinStayJ(start, nights) {
+  let ms = 1;
+  for (let i = 0; i < nights; i++) { const m = getMinStayJ(addDays(start, i)); if (m > ms) ms = m; }
+  return ms;
+}
 
-    // click handled via inline onclick
-
-    document.getElementById('calPrevL').addEventListener('click', () => {
-      if (calOffsetL > 0) { calOffsetL--; renderCalendarsL(); }
-    });
-    document.getElementById('calNextL').addEventListener('click', () => {
-      calOffsetL++; renderCalendarsL();
-    });
-
-    loadCalDataL();
-
-// ── Kalendář Jelen ──
-    const APARTMENT_ID_J = 4;
-    const LOCAL_FEE_J = 0;
-    const API_URL_J = `https://hostmaster-production.up.railway.app/api/public/availability/${APARTMENT_ID_J}`;
-
-    let calDataJ = null;
-    let calOffsetJ = 0;
-    const MONTH_NAMES_J = ['Leden','Únor','Březen','Duben','Květen','Červen',
-                           'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
-    const DOW_J = ['Po','Út','St','Čt','Pá','So','Ne'];
-    let selJ = { start: null, end: null, hover: null };
-
-    const padJ = n => String(n).padStart(2,'0');
-    const todayStrJ = (() => { const t = new Date(); t.setHours(0,0,0,0); return `${t.getFullYear()}-${padJ(t.getMonth()+1)}-${padJ(t.getDate())}`; })();
-    function dateFromStrJ(s) { const [y,m,d] = s.split('-'); return new Date(+y,+m-1,+d); }
-    function fmtDateJ(ds) { const d = dateFromStrJ(ds); return `${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`; }
-    function addDaysJ(ds, n) { const d = dateFromStrJ(ds); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${padJ(d.getMonth()+1)}-${padJ(d.getDate())}`; }
-    function daysBetweenJ(ds1, ds2) { return Math.round((dateFromStrJ(ds2)-dateFromStrJ(ds1))/86400000); }
-
-    function getStatusJ(ds) {
-      if (!calDataJ) return 'available';
-      if (calDataJ.occupied && calDataJ.occupied.includes(ds)) return 'occupied';
-      if (calDataJ.blocked && calDataJ.blocked.some(b => (b.date||b) === ds)) return 'occupied';
-      return 'available';
-    }
-    function getPriceJ(ds) {
-      if (!calDataJ || !calDataJ.prices) return null;
-      const e = calDataJ.prices.find(p => p.date === ds);
-      return e ? e.price : null;
-    }
-    function getMinStayJ(ds) {
-      if (!calDataJ || !calDataJ.prices) return 1;
-      const e = calDataJ.prices.find(p => p.date === ds);
-      return e ? (e.min_stay || 1) : 1;
-    }
-    function calcMinStayJ(startDs, nights) {
-      let ms = 1;
-      for (let i = 0; i < nights; i++) ms = Math.max(ms, getMinStayJ(addDaysJ(startDs, i)));
-      return ms;
-    }
-
-    function renderMonthJ(containerId, year, month) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES_J[month]} ${year}</span></div><div class="cal-grid">`;
-      DOW_J.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
-      let dow = new Date(year, month, 1).getDay();
-      dow = dow === 0 ? 6 : dow - 1;
-      for (let i = 0; i < dow; i++) html += `<div class="cal-day empty"></div>`;
-      const days = new Date(year, month+1, 0).getDate();
-      for (let d = 1; d <= days; d++) {
-        const ds = `${year}-${padJ(month+1)}-${padJ(d)}`;
-        const past = ds < todayStrJ;
-        const status = getStatusJ(ds);
-        const price = getPriceJ(ds);
-        const minStay = getMinStayJ(ds);
-        const isOcc = (status === 'occupied');
-        const isStart = selJ.start === ds;
-        const isEnd   = selJ.end   === ds;
-        let inRange = false, invalidRange = false;
-        if (selJ.start && !selJ.end && selJ.hover && selJ.hover > selJ.start && ds > selJ.start && ds <= selJ.hover) {
-          const nights = daysBetweenJ(selJ.start, selJ.hover);
-          const ms = calcMinStayJ(selJ.start, nights);
-          if (nights < ms) invalidRange = true; else inRange = true;
-        } else if (selJ.start && selJ.end && ds > selJ.start && ds < selJ.end) {
-          inRange = true;
-        }
-        let cls = `cal-day ${past ? 'past' : isOcc ? 'occupied' : 'available'}`;
-        if (isStart) cls += ' selected-start';
-        if (isEnd)   cls += ' selected-end';
-        if (inRange) cls += ' in-range';
-        if (invalidRange) cls += ' invalid-range';
-        if (ds === todayStrJ) cls += ' today';
-        const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
-        const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
-        html += `<div class="${cls}" data-ds="${ds}" data-apt="J"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
-      }
-      html += '</div>';
-      container.innerHTML = html;
-    }
-
-    function renderCalendarsJ() {
-      const today = new Date();
-      const d0 = new Date(today.getFullYear(), today.getMonth() + calOffsetJ, 1);
-      const d1 = new Date(today.getFullYear(), today.getMonth() + calOffsetJ + 1, 1);
-      renderMonthJ('calMonthJ0', d0.getFullYear(), d0.getMonth());
-      renderMonthJ('calMonthJ1', d1.getFullYear(), d1.getMonth());
-      const prev = document.getElementById('calPrevJ');
-      if (prev) prev.disabled = calOffsetJ <= 0;
-      updateSummaryJ();
-    }
-
-    function updateSummaryJ() {
-      const el = document.getElementById('calSummaryJ');
-      const warn = document.getElementById('calWarnJ');
-      if (!el) return;
-      if (!selJ.start) { el.style.display='none'; if(warn) warn.style.display='none'; return; }
-      el.style.display = 'flex';
-      if (!selJ.end) {
-        el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Vyberte datum odjezdu</div><button class="btn-clear" onclick="resetSelJ()">Zrušit výběr</button>`;
-        return;
-      }
-      const nights = daysBetweenJ(selJ.start, selJ.end);
+function renderMonthJ(containerId, year, month) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES[month]} ${year}</span></div><div class="cal-grid">`;
+  DOW.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+  let dow = new Date(year, month, 1).getDay(); dow = dow === 0 ? 6 : dow - 1;
+  for (let i = 0; i < dow; i++) html += `<div class="cal-day empty"></div>`;
+  const days = new Date(year, month+1, 0).getDate();
+  for (let d = 1; d <= days; d++) {
+    const ds = `${year}-${pad(month+1)}-${pad(d)}`;
+    const past = ds < todayStr;
+    const isOcc = getStatusJ(ds) === 'occupied';
+    const isStart = selJ.start === ds, isEnd = selJ.end === ds;
+    let inRange = false, invalidRange = false;
+    if (selJ.start && !selJ.end && selJ.hover && selJ.hover > selJ.start && ds > selJ.start && ds <= selJ.hover) {
+      const nights = daysBetween(selJ.start, selJ.hover);
       const ms = calcMinStayJ(selJ.start, nights);
-      if (warn) {
-        if (nights < ms) {
-          warn.style.display = 'block';
-          warn.innerHTML = `<span class="warn-icon">⚠</span> Min ${ms} nocí v tomto termínu`;
-        } else {
-          warn.style.display = 'none';
-        }
-      }
-      if (nights < ms) {
-        el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Minimální pobyt: ${ms} nocí</div><button class="btn-clear" onclick="resetSelJ()">Zrušit výběr</button>`;
-        return;
-      }
-      let total = 0;
-      for (let i = 0; i < nights; i++) total += (getPriceJ(addDaysJ(selJ.start, i)) || 0);
-      const feeNote = LOCAL_FEE_J > 0 ? `<div class="summary-fee">+ Místní poplatek z pobytu <strong>${LOCAL_FEE_J} Kč</strong>/noc za dospělého hosta (účtováno zvlášť)</div>` : '';
-      const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total * 0.3).toLocaleString('cs-CZ')} Kč</strong></div><div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total * 0.7).toLocaleString('cs-CZ')} Kč</strong></div></div>`;
-      el.innerHTML = `<div style="flex:1"><div class="summary-info">Příjezd <strong>${fmtDateJ(selJ.start)}</strong> → Odjezd <strong>${fmtDateJ(selJ.end)}</strong> · <strong>${nights} nocí</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span><span class="summary-vat">vč. DPH</span></div>${feeNote}${deposit}</div><button class="btn-clear" onclick="resetSelJ()">Zrušit</button>`;
-      prefillFormJ();
+      if (nights < ms) invalidRange = true; else inRange = true;
+    } else if (selJ.start && selJ.end && ds > selJ.start && ds < selJ.end) { inRange = true; }
+    let cls = `cal-day ${past ? 'past' : isOcc ? 'occupied' : 'available'}`;
+    if (isStart) cls += ' selected-start';
+    if (isEnd) cls += ' selected-end';
+    if (inRange) cls += ' in-range';
+    if (invalidRange) cls += ' invalid-range';
+    if (ds === todayStr) cls += ' today';
+    const price = getPriceJ(ds);
+    const minStay = getMinStayJ(ds);
+    const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
+    const minHtml = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
+    html += `<div class="${cls}" data-ds="${ds}"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function attachListenersJ() {
+  document.querySelectorAll('#calOuterJ .cal-day[data-ds]').forEach(day => {
+    if (day.classList.contains('past') || day.classList.contains('occupied') || day.classList.contains('empty')) return;
+    day.addEventListener('click', () => handleClickJ(day.dataset.ds));
+    day.addEventListener('mouseover', () => handleHoverJ(day.dataset.ds));
+    day.addEventListener('mouseout', () => handleHoverEndJ());
+  });
+}
+
+function renderCalendarsJ() {
+  const today = new Date();
+  const d0 = new Date(today.getFullYear(), today.getMonth() + offsetJ, 1);
+  const d1 = new Date(today.getFullYear(), today.getMonth() + offsetJ + 1, 1);
+  renderMonthJ('calMonthJ0', d0.getFullYear(), d0.getMonth());
+  renderMonthJ('calMonthJ1', d1.getFullYear(), d1.getMonth());
+  document.getElementById('calPrevJ').disabled = offsetJ <= 0;
+  attachListenersJ();
+  updateSummaryJ();
+}
+
+function handleClickJ(ds) {
+  if (getStatusJ(ds) === 'occupied') return;
+  if (selJ.start === ds && !selJ.end) { selJ = { start: null, end: null, hover: null }; renderCalendarsJ(); return; }
+  if (selJ.start && selJ.end) { selJ = { start: ds, end: null, hover: null }; renderCalendarsJ(); return; }
+  if (!selJ.start) { selJ.start = ds; selJ.end = null; selJ.hover = null; renderCalendarsJ(); return; }
+  if (ds <= selJ.start) { selJ.start = ds; selJ.end = null; selJ.hover = null; }
+  else {
+    let hasOcc = false;
+    for (let d = addDays(selJ.start, 1); d < ds; d = addDays(d, 1)) { if (getStatusJ(d) === 'occupied') { hasOcc = true; break; } }
+    if (hasOcc) { selJ = { start: ds, end: null, hover: null }; }
+    else { selJ.end = ds; selJ.hover = null; }
+  }
+  renderCalendarsJ();
+}
+
+function handleHoverJ(ds) {
+  if (selJ.start && !selJ.end && ds !== selJ.hover) {
+    selJ.hover = ds;
+    renderCalendarsJ();
+    const warn = document.getElementById('calWarnJ');
+    if (warn && ds > selJ.start) {
+      const nights = daysBetween(selJ.start, ds);
+      const ms = calcMinStayJ(selJ.start, nights);
+      if (nights < ms) { warn.textContent = `⚠ Min ${ms} nocí — přidejte ${ms-nights} ${ms-nights===1?'noc':'noci'}`; warn.style.display = 'block'; }
+      else { warn.style.display = 'none'; }
     }
+  }
+}
 
-    function handleClickJ(ds) {
-      const status = getStatusJ(ds);
-      if (status === 'occupied') return;
-      if (selJ.start === ds && !selJ.end) { selJ = { start: null, end: null, hover: null }; renderCalendarsJ(); return; }
-      if (selJ.start && selJ.end) { selJ = { start: ds, end: null, hover: null }; renderCalendarsJ(); return; }
-      if (!selJ.start) { selJ.start = ds; selJ.end = null; selJ.hover = null; renderCalendarsJ(); return; }
-      if (ds <= selJ.start) { selJ.start = ds; selJ.end = null; selJ.hover = null; }
-      else {
-        let hasOcc = false;
-        for (let d = addDaysJ(selJ.start,1); d < ds; d = addDaysJ(d,1)) {
-          if (getStatusJ(d) === 'occupied') { hasOcc = true; break; }
-        }
-        if (hasOcc) { selJ = { start: ds, end: null, hover: null }; }
-        else { selJ.end = ds; selJ.hover = null; }
-      }
-      renderCalendarsJ();
-    }
+function handleHoverEndJ() {
+  if (selJ.hover) { selJ.hover = null; renderCalendarsJ(); }
+  const warn = document.getElementById('calWarnJ');
+  if (warn) warn.style.display = 'none';
+}
 
-    function handleHoverJ(ds) {
-      if (!selJ.start || selJ.end) return;
-      selJ.hover = ds;
-      renderCalendarsJ();
-    }
+function updateSummaryJ() {
+  const el = document.getElementById('calSummaryJ');
+  if (!el) return;
+  if (!selJ.start) { el.style.display='none'; return; }
+  el.style.display = 'flex';
+  if (!selJ.end) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Vyberte datum odjezdu</div><button class="btn-clear" onclick="resetSelJ()">Zrušit výběr</button>`; return; }
+  const nights = daysBetween(selJ.start, selJ.end);
+  const ms = calcMinStayJ(selJ.start, nights);
+  if (nights < ms) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Min. pobyt: ${ms} nocí</div><button class="btn-clear" onclick="resetSelJ()">Zrušit výběr</button>`; return; }
+  let total = 0;
+  for (let i = 0; i < nights; i++) total += (getPriceJ(addDays(selJ.start, i)) || 0);
+  const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total*0.3).toLocaleString('cs-CZ')} Kč</strong></div><div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total*0.7).toLocaleString('cs-CZ')} Kč</strong></div></div>`;
+  el.innerHTML = `<div style="flex:1"><div class="summary-info">Příjezd <strong>${fmtDate(selJ.start)}</strong> → Odjezd <strong>${fmtDate(selJ.end)}</strong> · <strong>${nights} nocí</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span><span class="summary-vat">vč. DPH</span></div>${deposit}</div><button class="btn-clear" onclick="resetSelJ()">Zrušit</button>`;
+  prefillFormJ();
+}
 
-    function handleHoverEndJ() {
-      if (!selJ.start || selJ.end) return;
-      selJ.hover = null;
-      renderCalendarsJ();
-    }
+function resetSelJ() { selJ = { start: null, end: null, hover: null }; renderCalendarsJ(); clearFormJ(); }
+function prefillFormJ() {
+  if (!selJ.start || !selJ.end) return;
+  const f = document.getElementById('cf-from-j'), t = document.getElementById('cf-to-j');
+  if (f) f.value = selJ.start; if (t) t.value = selJ.end;
+}
+function clearFormJ() {
+  const f = document.getElementById('cf-from-j'), t = document.getElementById('cf-to-j');
+  if (f) f.value = ''; if (t) t.value = '';
+}
 
-    function resetSelJ() {
-      selJ = { start: null, end: null, hover: null };
-      renderCalendarsJ();
-      clearFormPrefillJ();
-    }
+document.getElementById('calPrevJ').addEventListener('click', () => { if (offsetJ > 0) { offsetJ--; renderCalendarsJ(); } });
+document.getElementById('calNextJ').addEventListener('click', () => { offsetJ++; renderCalendarsJ(); });
 
-    function prefillFormJ() {
-      if (!selJ.start || !selJ.end) return;
-      const fromField = document.getElementById('cf-from');
-      const toField   = document.getElementById('cf-to');
-      if (fromField) fromField.value = selJ.start;
-      if (toField)   toField.value   = selJ.end;
-    }
+async function loadCalDataJ() {
+  try {
+    const from = todayStr;
+    const to = addDays(todayStr, 365);
+    const res = await fetch(`${API_J}?from=${from}&to=${to}`);
+    dataJ = await res.json();
+    renderCalendarsJ();
+  } catch(e) { console.error('Chyba Jelen:', e); }
+}
 
-    function clearFormPrefillJ() {
-      const fromField = document.getElementById('cf-from');
-      const toField   = document.getElementById('cf-to');
-      if (fromField) fromField.value = '';
-      if (toField)   toField.value   = '';
-    }
+loadCalDataL();
+loadCalDataJ();
 
-    async function loadCalDataJ() {
-      try {
-        const from = todayStrJ;
-        const to = addDaysJ(todayStrJ, 365);
-        const res = await fetch(`${API_URL_J}?from=${from}&to=${to}`);
-        calDataJ = await res.json();
-        renderCalendarsJ();
-      } catch(e) {
-        console.error('Chyba načítání kalendáře Jelen:', e);
-      }
-    }
+</script>
 
-    // click handled via inline onclick
-
-    document.getElementById('calPrevJ').addEventListener('click', () => {
-      if (calOffsetJ > 0) { calOffsetJ--; renderCalendarsJ(); }
-    });
-    document.getElementById('calNextJ').addEventListener('click', () => {
-      calOffsetJ++; renderCalendarsJ();
-    });
-
-    loadCalDataJ();
-
-    // Event delegation — stejný pattern jako Lipno
-    document.addEventListener('click', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day || day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
-      if (day.dataset.apt === 'L') handleClickL(day.dataset.ds);
-      else if (day.dataset.apt === 'J') handleClickJ(day.dataset.ds);
-    });
-    document.addEventListener('mouseover', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day || day.classList.contains('occupied') || day.classList.contains('past')) return;
-      if (day.dataset.apt === 'L') handleHoverL(day.dataset.ds);
-      else if (day.dataset.apt === 'J') handleHoverJ(day.dataset.ds);
-    });
-    document.addEventListener('mouseout', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day) return;
-      if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) {
-        if (day.dataset.apt === 'L') handleHoverEndL();
-        else if (day.dataset.apt === 'J') handleHoverEndJ();
-      }
-    });
-
-  </script>
 
   <script>
     // ── Kontaktní formulář ──
