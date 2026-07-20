@@ -1010,10 +1010,7 @@
         if (ds === todayStrL) cls += ' today';
         const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
         const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
-        const clickable = !past && !isOcc;
-        const onclick = clickable ? ` onclick="handleClickL('${ds}')"` : '';
-        const onmouse = clickable ? ` onmouseover="handleHoverL('${ds}')" onmouseout="handleHoverEndL()"` : '';
-        html += `<div class="${cls}" data-ds="${ds}" data-apt="L"${onclick}${onmouse}><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
+        html += `<div class="${cls}" data-ds="${ds}" data-apt="L"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
       }
       html += '</div>';
       container.innerHTML = html;
@@ -1136,14 +1133,6 @@
 
     loadCalDataL();
 
-    // Expose to global scope for inline onclick
-    window.handleClickL = handleClickL;
-    window.handleHoverL = handleHoverL;
-    window.handleHoverEndL = handleHoverEndL;
-
-  </script>
-
-  <script>
 // ── Kalendář Jelen ──
     const APARTMENT_ID_J = 4;
     const LOCAL_FEE_J = 0;
@@ -1219,10 +1208,7 @@
         if (ds === todayStrJ) cls += ' today';
         const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
         const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
-        const clickableJ = !past && !isOcc;
-        const onclickJ = clickableJ ? ` onclick="handleClickJ('${ds}')"` : '';
-        const onmouseJ = clickableJ ? ` onmouseover="handleHoverJ('${ds}')" onmouseout="handleHoverEndJ()"` : '';
-        html += `<div class="${cls}" data-ds="${ds}" data-apt="J"${onclickJ}${onmouseJ}><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
+        html += `<div class="${cls}" data-ds="${ds}" data-apt="J"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
       }
       html += '</div>';
       container.innerHTML = html;
@@ -1345,10 +1331,27 @@
 
     loadCalDataJ();
 
-    // Expose to global scope for inline onclick
-    window.handleClickJ = handleClickJ;
-    window.handleHoverJ = handleHoverJ;
-    window.handleHoverEndJ = handleHoverEndJ;
+    // Event delegation — stejný pattern jako Lipno
+    document.addEventListener('click', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day || day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
+      if (day.dataset.apt === 'L') handleClickL(day.dataset.ds);
+      else if (day.dataset.apt === 'J') handleClickJ(day.dataset.ds);
+    });
+    document.addEventListener('mouseover', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day || day.classList.contains('occupied') || day.classList.contains('past')) return;
+      if (day.dataset.apt === 'L') handleHoverL(day.dataset.ds);
+      else if (day.dataset.apt === 'J') handleHoverJ(day.dataset.ds);
+    });
+    document.addEventListener('mouseout', e => {
+      const day = e.target.closest('.cal-day[data-ds]');
+      if (!day) return;
+      if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) {
+        if (day.dataset.apt === 'L') handleHoverEndL();
+        else if (day.dataset.apt === 'J') handleHoverEndJ();
+      }
+    });
 
   </script>
 
