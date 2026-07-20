@@ -1122,23 +1122,25 @@
       }
     }
 
-    document.addEventListener('click', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day) return;
-      if (!day.closest('#calOuterL')) return;
-      if (day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
-      handleClickL(day.dataset.ds);
-    });
-    document.addEventListener('mouseover', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day || !day.closest('#calOuterL')) return;
-      handleHoverL(day.dataset.ds);
-    });
-    document.addEventListener('mouseout', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day || !day.closest('#calOuterL')) return;
-      if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEndL();
-    });
+    (function() {
+      const outer = document.getElementById('calOuterL');
+      outer.addEventListener('click', e => {
+        const day = e.target.closest('.cal-day[data-ds]');
+        if (!day) return;
+        if (day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
+        handleClickL(day.dataset.ds);
+      });
+      outer.addEventListener('mouseover', e => {
+        const day = e.target.closest('.cal-day[data-ds]');
+        if (!day) return;
+        handleHoverL(day.dataset.ds);
+      });
+      outer.addEventListener('mouseout', e => {
+        const day = e.target.closest('.cal-day[data-ds]');
+        if (!day) return;
+        if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEndL();
+      });
+    })();
 
     document.getElementById('calPrevL').addEventListener('click', () => {
       if (calOffsetL > 0) { calOffsetL--; renderCalendarsL(); }
@@ -1339,23 +1341,25 @@
       }
     }
 
-    document.addEventListener('click', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day) return;
-      if (!day.closest('#calOuterJ')) return;
-      if (day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
-      handleClickJ(day.dataset.ds);
-    });
-    document.addEventListener('mouseover', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day || !day.closest('#calOuterJ')) return;
-      handleHoverJ(day.dataset.ds);
-    });
-    document.addEventListener('mouseout', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day || !day.closest('#calOuterJ')) return;
-      if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEndJ();
-    });
+    (function() {
+      const outer = document.getElementById('calOuterJ');
+      outer.addEventListener('click', e => {
+        const day = e.target.closest('.cal-day[data-ds]');
+        if (!day) return;
+        if (day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
+        handleClickJ(day.dataset.ds);
+      });
+      outer.addEventListener('mouseover', e => {
+        const day = e.target.closest('.cal-day[data-ds]');
+        if (!day) return;
+        handleHoverJ(day.dataset.ds);
+      });
+      outer.addEventListener('mouseout', e => {
+        const day = e.target.closest('.cal-day[data-ds]');
+        if (!day) return;
+        if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEndJ();
+      });
+    })();
 
     document.getElementById('calPrevJ').addEventListener('click', () => {
       if (calOffsetJ > 0) { calOffsetJ--; renderCalendarsJ(); }
