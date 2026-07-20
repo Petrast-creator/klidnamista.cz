@@ -1010,7 +1010,10 @@
         if (ds === todayStrL) cls += ' today';
         const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
         const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
-        html += `<div class="${cls}" data-ds="${ds}" data-apt="L"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
+        const clickable = !past && !isOcc;
+        const onclick = clickable ? ` onclick="handleClickL('${ds}')"` : '';
+        const onmouse = clickable ? ` onmouseover="handleHoverL('${ds}')" onmouseout="handleHoverEndL()"` : '';
+        html += `<div class="${cls}" data-ds="${ds}" data-apt="L"${onclick}${onmouse}><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
       }
       html += '</div>';
       container.innerHTML = html;
@@ -1122,25 +1125,7 @@
       }
     }
 
-    (function() {
-      const outer = document.getElementById('calOuterL');
-      outer.addEventListener('click', e => {
-        const day = e.target.closest('.cal-day[data-ds]');
-        if (!day) return;
-        if (day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
-        handleClickL(day.dataset.ds);
-      });
-      outer.addEventListener('mouseover', e => {
-        const day = e.target.closest('.cal-day[data-ds]');
-        if (!day) return;
-        handleHoverL(day.dataset.ds);
-      });
-      outer.addEventListener('mouseout', e => {
-        const day = e.target.closest('.cal-day[data-ds]');
-        if (!day) return;
-        if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEndL();
-      });
-    })();
+    // click handled via inline onclick
 
     document.getElementById('calPrevL').addEventListener('click', () => {
       if (calOffsetL > 0) { calOffsetL--; renderCalendarsL(); }
@@ -1229,7 +1214,10 @@
         if (ds === todayStrJ) cls += ' today';
         const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
         const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
-        html += `<div class="${cls}" data-ds="${ds}" data-apt="J"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
+        const clickableJ = !past && !isOcc;
+        const onclickJ = clickableJ ? ` onclick="handleClickJ('${ds}')"` : '';
+        const onmouseJ = clickableJ ? ` onmouseover="handleHoverJ('${ds}')" onmouseout="handleHoverEndJ()"` : '';
+        html += `<div class="${cls}" data-ds="${ds}" data-apt="J"${onclickJ}${onmouseJ}><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
       }
       html += '</div>';
       container.innerHTML = html;
@@ -1341,25 +1329,7 @@
       }
     }
 
-    (function() {
-      const outer = document.getElementById('calOuterJ');
-      outer.addEventListener('click', e => {
-        const day = e.target.closest('.cal-day[data-ds]');
-        if (!day) return;
-        if (day.classList.contains('occupied') || day.classList.contains('past') || day.classList.contains('empty')) return;
-        handleClickJ(day.dataset.ds);
-      });
-      outer.addEventListener('mouseover', e => {
-        const day = e.target.closest('.cal-day[data-ds]');
-        if (!day) return;
-        handleHoverJ(day.dataset.ds);
-      });
-      outer.addEventListener('mouseout', e => {
-        const day = e.target.closest('.cal-day[data-ds]');
-        if (!day) return;
-        if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEndJ();
-      });
-    })();
+    // click handled via inline onclick
 
     document.getElementById('calPrevJ').addEventListener('click', () => {
       if (calOffsetJ > 0) { calOffsetJ--; renderCalendarsJ(); }
