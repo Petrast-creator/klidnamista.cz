@@ -1136,6 +1136,11 @@
 
     loadCalDataL();
 
+    // Expose to global scope for inline onclick
+    window.handleClickL = handleClickL;
+    window.handleHoverL = handleHoverL;
+    window.handleHoverEndL = handleHoverEndL;
+
   </script>
 
   <script>
@@ -1339,6 +1344,11 @@
     });
 
     loadCalDataJ();
+
+    // Expose to global scope for inline onclick
+    window.handleClickJ = handleClickJ;
+    window.handleHoverJ = handleHoverJ;
+    window.handleHoverEndJ = handleHoverEndJ;
 
   </script>
 
