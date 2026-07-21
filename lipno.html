@@ -888,11 +888,19 @@
     function handleClick(ds) {
       const status = getStatus(ds);
       if (status === 'occupied') return;
+      sel.hover = null;
       if (sel.start === ds && !sel.end) { sel = { start: null, end: null, hover: null }; renderCalendars(); return; }
       if (sel.start && sel.end) { sel = { start: ds, end: null, hover: null }; renderCalendars(); return; }
-      if (!sel.start) { sel.start = ds; sel.end = null; sel.hover = null; renderCalendars(); return; }
-      if (ds <= sel.start) { sel.start = ds; sel.end = null; sel.hover = null; }
-      else { sel.end = ds; sel.hover = null; }
+      if (!sel.start) { sel.start = ds; sel.end = null; renderCalendars(); return; }
+      if (ds <= sel.start) { sel.start = ds; sel.end = null; }
+      else {
+        let hasOcc = false;
+        for (let d = addDays(sel.start, 1); d < ds; d = addDays(d, 1)) {
+          if (getStatus(d) === 'occupied') { hasOcc = true; break; }
+        }
+        if (hasOcc) { sel = { start: ds, end: null, hover: null }; }
+        else { sel.end = ds; }
+      }
       renderCalendars();
     }
 
