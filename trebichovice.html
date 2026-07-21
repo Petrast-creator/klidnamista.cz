@@ -1013,11 +1013,16 @@ function renderMonthL(containerId, year, month) {
 }
 
 function attachListenersL() {
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
   document.querySelectorAll('#calOuterL .cal-day[data-ds]').forEach(day => {
     if (day.classList.contains('past') || day.classList.contains('occupied') || day.classList.contains('empty')) return;
-    day.addEventListener('click', () => handleClickL(day.dataset.ds));
-    day.addEventListener('mouseover', () => handleHoverL(day.dataset.ds));
-    day.addEventListener('mouseout', () => handleHoverEndL());
+    if (isTouch) {
+      day.addEventListener('touchend', e => { e.preventDefault(); handleClickL(day.dataset.ds); }, { passive: false });
+    } else {
+      day.addEventListener('click', () => handleClickL(day.dataset.ds));
+      day.addEventListener('mouseover', () => handleHoverL(day.dataset.ds));
+      day.addEventListener('mouseout', () => handleHoverEndL());
+    }
   });
 }
 
@@ -1172,11 +1177,16 @@ function renderMonthJ(containerId, year, month) {
 }
 
 function attachListenersJ() {
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
   document.querySelectorAll('#calOuterJ .cal-day[data-ds]').forEach(day => {
     if (day.classList.contains('past') || day.classList.contains('occupied') || day.classList.contains('empty')) return;
-    day.addEventListener('click', () => handleClickJ(day.dataset.ds));
-    day.addEventListener('mouseover', () => handleHoverJ(day.dataset.ds));
-    day.addEventListener('mouseout', () => handleHoverEndJ());
+    if (isTouch) {
+      day.addEventListener('touchend', e => { e.preventDefault(); handleClickJ(day.dataset.ds); }, { passive: false });
+    } else {
+      day.addEventListener('click', () => handleClickJ(day.dataset.ds));
+      day.addEventListener('mouseover', () => handleHoverJ(day.dataset.ds));
+      day.addEventListener('mouseout', () => handleHoverEndJ());
+    }
   });
 }
 
