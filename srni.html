@@ -836,6 +836,7 @@
       renderMonth('calMonth1', d1.getFullYear(), d1.getMonth());
       document.getElementById('calPrevOuter').disabled = (calOffset <= 0);
       updateSummary();
+      attachListeners();
     }
 
     // ── Výběr termínu ─────────────────────────────────────────────────
@@ -882,21 +883,19 @@
     }
 
     // Event delegation
-    document.addEventListener('click', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day || day.classList.contains('occupied') || day.classList.contains('past')) return;
-      handleClick(day.dataset.ds);
-    });
-    document.addEventListener('mouseover', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day || day.classList.contains('occupied') || day.classList.contains('past')) return;
-      handleHover(day.dataset.ds);
-    });
-    document.addEventListener('mouseout', e => {
-      const day = e.target.closest('.cal-day[data-ds]');
-      if (!day) return;
-      if (!e.relatedTarget || !e.relatedTarget.closest('.cal-day[data-ds]')) handleHoverEnd();
-    });
+    function attachListeners() {
+      const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+      document.querySelectorAll('.cal-day[data-ds]').forEach(day => {
+        if (day.classList.contains('past') || day.classList.contains('occupied') || day.classList.contains('empty')) return;
+        if (isTouch) {
+          day.addEventListener('touchend', e => { e.preventDefault(); handleClick(day.dataset.ds); }, { passive: false });
+        } else {
+          day.addEventListener('click', () => handleClick(day.dataset.ds));
+          day.addEventListener('mouseover', () => handleHover(day.dataset.ds));
+          day.addEventListener('mouseout', () => handleHoverEnd());
+        }
+      });
+    }
 
     // ── Summary bar ───────────────────────────────────────────────────
     function updateSummary() {
