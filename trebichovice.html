@@ -563,7 +563,8 @@
     .summary-total { font-size: 22px; font-weight: 700; color: var(--color-primary); }
     .summary-vat { font-size: 12px; color: var(--color-text-muted); }
     .summary-fee { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
-    .btn-clear { margin-left: auto; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-muted); font-size: 13px; cursor: pointer; }
+    .cal-summary { margin-top: 16px; padding: 14px 18px; background: var(--color-surface-offset, #f5f5f3); border-radius: 10px; border: 1px solid var(--color-border); display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .btn-clear { flex-shrink: 0; align-self: flex-start; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-muted); font-size: 13px; cursor: pointer; white-space: nowrap; }
     .btn-clear:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
     .summary-fee strong {
@@ -771,6 +772,8 @@
                 <div class="cal-month" id="calMonthJ1"></div>
                 <button class="cal-arrow" id="calNextJ" aria-label="Další měsíc">›</button>
               </div>
+              <div class="cal-warn" id="calWarnJ" style="display:none"></div>
+              <div class="cal-summary" id="calSummaryJ" style="display:none"></div>
               <div class="cal-legend">
                 <div class="cal-legend-item"><div class="cal-legend-dot available"></div>Volný den</div>
                 <div class="cal-legend-item"><div class="cal-legend-dot occupied"></div>Obsazeno</div>
@@ -877,8 +880,6 @@
                 <strong>Odjezd:</strong> do 11:00
               </div>
             </div>
-              <div class="cal-warn" id="calWarnJ"></div>
-              <div class="cal-summary" id="calSummaryJ" style="display:none"></div>
 
             <!-- Sidebar: Jelen -->
             <div class="detail-sidebar-card sidebar-hidden" id="sidebarJelen">
