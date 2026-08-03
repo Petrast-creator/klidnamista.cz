@@ -1240,3 +1240,34 @@ button { cursor: pointer; background: none; border: none; font: inherit; color: 
   .overview-card-wide .overview-card-image { width: 100%; aspect-ratio: 16/10; }
   .detail-photo-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Language switcher ── */
+#lang-toggle {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+  order: 10;
+}
+#lang-toggle:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Hide/show by language */
+[data-lang="cs"] [data-en]:not([data-cs]) { display: none !important; }
+[data-lang="en"] [data-cs] { display: none !important; }
+[data-lang="en"] [data-en] { display: block; }
+[data-lang="en"] span[data-en] { display: inline; }
+[data-lang="en"] a[data-en] { display: inline; }
+[data-lang="en"] button[data-en] { display: inline-block; }
+[data-lang="en"] li[data-en] { display: list-item; }
+[data-lang="en"] label[data-en] { display: block; }
+[data-lang="en"] option[data-en] { display: block; }
