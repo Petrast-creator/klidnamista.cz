@@ -81,9 +81,6 @@
     applyLang(lang);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  // Spusť až po načtení všech skriptů (kalendář, galerie atd.)
+  window.addEventListener('load', init);
 })();
