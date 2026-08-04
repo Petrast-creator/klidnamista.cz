@@ -8,22 +8,72 @@
 
     document.querySelectorAll('[data-en]').forEach(el => {
       if (lang === 'en') {
-        if (!el.dataset.cs) el.dataset.cs = el.innerHTML;
-        el.innerHTML = el.dataset.en;
+        // Ulož původní CZ jen jednou
+        if (!el.hasAttribute('data-cs')) {
+          el.setAttribute('data-cs', el.textContent);
+        }
+        // Přepiš jen textový obsah — bezpečně přes firstChild text node nebo textContent
+        // pokud element obsahuje pouze textový node, přepiš ho přímo
+        const kids = Array.from(el.childNodes);
+        const hasOnlyText = kids.every(n => n.nodeType === Node.TEXT_NODE);
+        if (hasOnlyText) {
+          el.textContent = el.getAttribute('data-en');
+        } else {
+          // Element má child elementy (ikony, <br> atd.) — najdi hlavní text node a přepiš ho
+          // Pokud existuje atribut data-en-html, použij innerHTML
+          if (el.hasAttribute('data-en-html')) {
+            el.innerHTML = el.getAttribute('data-en-html');
+          } else {
+            // Přepiš první textový node
+            for (const node of el.childNodes) {
+              if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                node.textContent = el.getAttribute('data-en');
+                break;
+              }
+            }
+          }
+        }
       } else {
-        if (el.dataset.cs) el.innerHTML = el.dataset.cs;
+        // Zpět na CZ
+        if (el.hasAttribute('data-cs')) {
+          const kids = Array.from(el.childNodes);
+          const hasOnlyText = kids.every(n => n.nodeType === Node.TEXT_NODE);
+          if (hasOnlyText) {
+            el.textContent = el.getAttribute('data-cs');
+          } else {
+            if (el.hasAttribute('data-en-html')) {
+              el.innerHTML = el.getAttribute('data-cs');
+            } else {
+              for (const node of el.childNodes) {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                  node.textContent = el.getAttribute('data-cs');
+                  break;
+                }
+              }
+            }
+          }
+        }
       }
     });
 
     // Placeholders
     document.querySelectorAll('[data-en-placeholder]').forEach(el => {
       if (lang === 'en') {
-        el.dataset.csPlaceholder = el.placeholder;
-        el.placeholder = el.dataset.enPlaceholder;
+        if (!el.hasAttribute('data-cs-placeholder')) {
+          el.setAttribute('data-cs-placeholder', el.placeholder);
+        }
+        el.placeholder = el.getAttribute('data-en-placeholder');
       } else {
-        if (el.dataset.csPlaceholder) el.placeholder = el.dataset.csPlaceholder;
+        if (el.hasAttribute('data-cs-placeholder')) {
+          el.placeholder = el.getAttribute('data-cs-placeholder');
+        }
       }
     });
+
+    // Kalendář — MONTH_NAMES a DAY_NAMES pokud existují
+    if (typeof window.setCalendarLang === 'function') {
+      window.setCalendarLang(lang);
+    }
   }
 
   window.toggleLang = function () {

@@ -468,7 +468,7 @@
     <div class="header-inner">
       <a href="index.html" class="logo" aria-label="Domů">
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><path d="M18 4L4 14v18h10v-9h8v9h10V14L18 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><circle cx="18" cy="10" r="2.5" fill="currentColor"/></svg>
-        <span class="logo-text">Naše klidná místa</span>
+        <span class="logo-text" data-en="Our Peaceful Places">Naše klidná místa</span>
       </a>
       <nav class="nav">
         <a href="lipno.html" class="nav-active">Lipno</a>
@@ -492,7 +492,7 @@
     <div class="detail-hero-overlay"></div>
     <div class="detail-hero-content container">
       <p class="apt-region" data-en="South Bohemian Region · Hůrka near Horní Planá">Jihočeský kraj · Hůrka u Horní Plané</p>
-      <h1>Váš prostor pro aktivní dny<br>a klidné večery</h1>
+      <h1 data-en-html="Your base for active days<br>and peaceful evenings">Váš prostor pro aktivní dny<br>a klidné večery</h1>
     </div>
   </div>
 
@@ -500,7 +500,7 @@
     <div class="container">
       <a href="index.html" class="detail-back">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Zpět na přehled
+        <span data-en="Back to overview">Zpět na přehled</span>
       </a>
 
       <!-- HLAVNÍ LAYOUT: obsah + sidebar -->
@@ -525,9 +525,9 @@
             <!-- Taby -->
             <div class="gallery-tabs" id="galleryTabs">
               <button class="gallery-tab active" data-cat="vse" data-en="All (15)">Vše (15)</button>
-              <button class="gallery-tab" data-cat="exteriér">Exteriér &amp; okolí</button>
+              <button class="gallery-tab" data-cat="exteriér" data-en="Exterior &amp; surroundings">Exteriér &amp; okolí</button>
               <button class="gallery-tab" data-cat="obyvak" data-en="Living room">Obývací pokoj</button>
-              <button class="gallery-tab" data-cat="kuchyne">Kuchyně &amp; jídelna</button>
+              <button class="gallery-tab" data-cat="kuchyne" data-en="Kitchen &amp; dining">Kuchyně &amp; jídelna</button>
               <button class="gallery-tab" data-cat="loznice">Ložnice</button>
               <button class="gallery-tab" data-cat="koupelna">Koupelny</button>
             </div>
@@ -618,7 +618,7 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label for="cf-name" data-en="Your name">Vaše jméno</label>
-                    <input type="text" id="cf-name" name="jmeno" placeholder="Jan Novák" required />
+                    <input type="text" id="cf-name" name="jmeno" placeholder="Jan Novák" data-en-placeholder="Jane Smith" required />
                   </div>
                   <div class="form-group">
                     <label for="cf-email" data-en="Email">E-mail</label>
@@ -646,7 +646,7 @@
               <div class="airbnb-alt">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v4l3 3"/></svg>
                 Preferujete rezervaci přes platformu?
-                <a href="https://www.airbnb.cz/h/apartmanprocyklisty" target="_blank" rel="noopener">Rezervovat přes Airbnb &rarr;</a>
+                <a href="https://www.airbnb.cz/h/apartmanprocyklisty" target="_blank" rel="noopener" data-en="Book on Airbnb →">Rezervovat přes Airbnb &rarr;</a>
               </div>
             </div>
           </div>
@@ -665,10 +665,10 @@
               <div class="detail-sidebar-meta-row"><span data-en="Bathrooms">Koupelny</span><span>2</span></div>
             </div>
             <div class="detail-sidebar-rules">
-              <strong>Příjezd:</strong> od 15:00<br>
-              <strong>Odjezd:</strong> do 10:30<br>
+              <strong data-en="Check-in:">Příjezd:</strong> od 15:00<br>
+              <strong data-en="Check-out:">Odjezd:</strong> do 10:30<br>
               <strong>Domácí zvířata:</strong> pouze po předchozí domluvě<br>
-              <strong>Párty:</strong> nejsou povoleny
+              <strong data-en="Parties:">Párty:</strong> nejsou povoleny
             </div>
           </div>
         </aside>
@@ -1039,7 +1039,69 @@
         }
       });
     }
-  </script>
+  
+    // ── Calendar language support ──
+    const MONTH_NAMES_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const DAY_NAMES_EN   = ['MO','TU','WE','TH','FR','SA','SU'];
+    const MONTH_NAMES_CS = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+    const DAY_NAMES_CS   = ['PO','ÚT','ST','ČT','PÁ','SO','NE'];
+
+    window.setCalendarLang = function(lang) {
+      const isEN = lang === 'en';
+      // Měsíce v navigaci
+      document.querySelectorAll('.cal-month-title').forEach(el => {
+        const text = el.textContent.trim();
+        const names_from = isEN ? MONTH_NAMES_CS : MONTH_NAMES_EN;
+        const names_to   = isEN ? MONTH_NAMES_EN : MONTH_NAMES_CS;
+        names_from.forEach((m, i) => {
+          if (text.startsWith(m)) {
+            el.textContent = el.textContent.replace(m, names_to[i]);
+          }
+        });
+      });
+      // Dny v týdnu
+      document.querySelectorAll('.cal-dow').forEach((el, i) => {
+        el.textContent = isEN ? DAY_NAMES_EN[i % 7] : DAY_NAMES_CS[i % 7];
+      });
+      // Legenda
+      document.querySelectorAll('.cal-legend-item').forEach(el => {
+        const span = el.querySelector('span:last-child') || el.querySelector('span');
+        if (!span) return;
+        const t = span.textContent.trim();
+        if (t === 'Volný den' || t === 'Available') span.textContent = isEN ? 'Available' : 'Volný den';
+        if (t === 'Obsazeno' || t === 'Occupied') span.textContent = isEN ? 'Occupied' : 'Obsazeno';
+      });
+      // Hint text
+      document.querySelectorAll('.cal-hint').forEach(el => {
+        if (isEN) {
+          if (!el.dataset.cs) el.dataset.cs = el.textContent;
+          el.textContent = 'Click the arrival date, then the departure date';
+        } else {
+          if (el.dataset.cs) el.textContent = el.dataset.cs;
+        }
+      });
+      // Summary hint
+      document.querySelectorAll('.cal-select-hint').forEach(el => {
+        if (isEN) {
+          if (!el.dataset.cs) el.dataset.cs = el.textContent;
+          if (el.textContent.includes('odjezdu') || el.textContent.includes('příjezdu')) {
+            el.textContent = 'Select a departure date';
+          }
+        } else {
+          if (el.dataset.cs) el.textContent = el.dataset.cs;
+        }
+      });
+      // ceny v Kč text
+      document.querySelectorAll('.cal-price-note').forEach(el => {
+        if (isEN) {
+          if (!el.dataset.cs) el.dataset.cs = el.textContent;
+          el.textContent = 'prices in CZK / night, incl. VAT';
+        } else {
+          if (el.dataset.cs) el.textContent = el.dataset.cs;
+        }
+      });
+    };
+</script>
   <script src="lang.js"></script>
 </body>
 </html>
