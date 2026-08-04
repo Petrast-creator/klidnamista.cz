@@ -1262,12 +1262,4 @@ button { cursor: pointer; background: none; border: none; font: inherit; color: 
 }
 
 /* Hide/show by language */
-[data-lang="cs"] [data-en]:not([data-cs]) { display: none !important; }
-[data-lang="en"] [data-cs] { display: none !important; }
-[data-lang="en"] [data-en] { display: block; }
-[data-lang="en"] span[data-en] { display: inline; }
-[data-lang="en"] a[data-en] { display: inline; }
-[data-lang="en"] button[data-en] { display: inline-block; }
-[data-lang="en"] li[data-en] { display: list-item; }
-[data-lang="en"] label[data-en] { display: block; }
-[data-lang="en"] option[data-en] { display: block; }
+/* Language switching is handled entirely by lang.js via textContent swap */
