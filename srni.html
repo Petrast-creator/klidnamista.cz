@@ -1171,6 +1171,8 @@
           if (el.dataset.cs) el.textContent = el.dataset.cs;
         }
       });
+      // Re-renderovat kalendář
+      if (typeof renderCalendars === 'function') renderCalendars();
     };
 </script>
   <script src="lang.js"></script>

@@ -1587,6 +1587,9 @@ loadCalDataJ();
         if (isEN) el.innerHTML = el.getAttribute('data-en-html');
         else if (csHtml && csHtml.trim()) el.innerHTML = csHtml;
       });
+      // Re-renderovat oba kalendáře
+      if (typeof renderCalendarsL === 'function') renderCalendarsL();
+      if (typeof renderCalendarsJ === 'function') renderCalendarsJ();
     };
   })();
   </script>
