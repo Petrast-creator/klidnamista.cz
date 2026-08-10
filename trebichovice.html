@@ -534,7 +534,7 @@
       font-size: var(--text-sm);
     }
     .two-apt-sidebars .detail-sidebar-rules {
-      font-size: 12px;
+      font-size: var(--text-base);
       margin-top: var(--space-3);
       padding-top: var(--space-3);
     }
@@ -985,7 +985,7 @@ function calcMinStayL(start, nights) {
 function renderMonthL(containerId, year, month) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES[month]} ${year}</span></div><div class="cal-grid">`;
+  let html = `<div class="cal-month-header"><span class="cal-month-title">${(window.__calLang==='en' ? MONTH_NAMES_EN : MONTH_NAMES)[month]} ${year}</span></div><div class="cal-grid">`;
   DOW.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
   let dow = new Date(year, month, 1).getDay(); dow = dow === 0 ? 6 : dow - 1;
   for (let i = 0; i < dow; i++) html += `<div class="cal-day empty"></div>`;
@@ -1010,7 +1010,8 @@ function renderMonthL(containerId, year, month) {
     const price = getPriceL(ds);
     const minStay = getMinStayL(ds);
     const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
-    const minHtml = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
+    const nightWord = window.__calLang === 'en' ? 'nights' : 'nocí';
+    const minHtml = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} ${nightWord}</span>` : '';
     html += `<div class="${cls}" data-ds="${ds}"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
   }
   html += '</div>';
@@ -1065,7 +1066,7 @@ function handleHoverL(ds) {
     if (warn && ds > selL.start) {
       const nights = daysBetween(selL.start, ds);
       const ms = calcMinStayL(selL.start, nights);
-      if (nights < ms) { warn.textContent = `⚠ Min ${ms} nocí — přidejte ${ms-nights} ${ms-nights===1?'noc':'noci'}`; warn.style.display = 'block'; }
+      if (nights < ms) { warn.textContent = window.__calLang==='en' ? `⚠ Min ${ms} nights — add ${ms-nights} more ${ms-nights===1?'night':'nights'}` : `⚠ Min ${ms} nocí — přidejte ${ms-nights} ${ms-nights===1?'noc':'noci'}`; warn.style.display = 'block'; }
       else { warn.style.display = 'none'; }
     }
   }
@@ -1082,14 +1083,16 @@ function updateSummaryL() {
   if (!el) return;
   if (!selL.start) { el.style.display='none'; return; }
   el.style.display = 'flex';
-  if (!selL.end) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Vyberte datum odjezdu</div><button class="btn-clear" onclick="resetSelL()">Zrušit výběr</button>`; return; }
+  if (!selL.end) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">${window.__calLang==='en'?'Select departure date':'Vyberte datum odjezdu'}</div><button class="btn-clear" onclick="resetSelL()">${window.__calLang==='en'?'Cancel':'Zrušit výběr'}</button>`; return; }
   const nights = daysBetween(selL.start, selL.end);
   const ms = calcMinStayL(selL.start, nights);
-  if (nights < ms) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Min. pobyt: ${ms} nocí</div><button class="btn-clear" onclick="resetSelL()">Zrušit výběr</button>`; return; }
+  if (nights < ms) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">${window.__calLang==='en'?`Min. stay: ${ms} nights`:`Min. pobyt: ${ms} nocí`}</div><button class="btn-clear" onclick="resetSelL()">${window.__calLang==='en'?'Cancel':'Zrušit výběr'}</button>`; return; }
   let total = 0;
   for (let i = 0; i < nights; i++) total += (getPriceL(addDays(selL.start, i)) || 0);
-  const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total*0.3).toLocaleString('cs-CZ')} Kč</strong></div><div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total*0.7).toLocaleString('cs-CZ')} Kč</strong></div></div>`;
-  el.innerHTML = `<div style="flex:1"><div class="summary-info">Příjezd <strong>${fmtDate(selL.start)}</strong> → Odjezd <strong>${fmtDate(selL.end)}</strong> · <strong>${nights} nocí</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span><span class="summary-vat">vč. DPH</span></div>${deposit}</div><button class="btn-clear" onclick="resetSelL()">Zrušit</button>`;
+  const isENL = window.__calLang === 'en';
+  const fmtML = (v) => isENL ? `${Math.round(v).toLocaleString('en-GB')} CZK` : `${Math.round(v).toLocaleString('cs-CZ')} Kč`;
+  const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>${isENL?'Deposit to reserve (30 %):':'Záloha k rezervaci (30 %):'}</span> <strong>${fmtML(total*0.3)}</strong></div><div class="deposit-row"><span>${isENL?'Balance due (one week before arrival):':'Doplatek (týden před příjezdem):'}</span> <strong>${fmtML(total*0.7)}</strong></div></div>`;
+  el.innerHTML = `<div style="flex:1"><div class="summary-info">${isENL?'Arrival':'Příjezd'} <strong>${fmtDate(selL.start)}</strong> → ${isENL?'Departure':'Odjezd'} <strong>${fmtDate(selL.end)}</strong> · <strong>${nights} ${isENL?'nights':'nocí'}</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${isENL?total.toLocaleString('en-GB')+' CZK':total.toLocaleString('cs-CZ')+' Kč'}</span><span class="summary-vat">${isENL?'incl. VAT':'vč. DPH'}</span></div>${deposit}</div><button class="btn-clear" onclick="resetSelL()">${isENL?'Cancel':'Zrušit'}</button>`;
   prefillFormL();
 }
 
@@ -1149,7 +1152,7 @@ function calcMinStayJ(start, nights) {
 function renderMonthJ(containerId, year, month) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES[month]} ${year}</span></div><div class="cal-grid">`;
+  let html = `<div class="cal-month-header"><span class="cal-month-title">${(window.__calLang==='en' ? MONTH_NAMES_EN : MONTH_NAMES)[month]} ${year}</span></div><div class="cal-grid">`;
   DOW.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
   let dow = new Date(year, month, 1).getDay(); dow = dow === 0 ? 6 : dow - 1;
   for (let i = 0; i < dow; i++) html += `<div class="cal-day empty"></div>`;
@@ -1174,7 +1177,8 @@ function renderMonthJ(containerId, year, month) {
     const price = getPriceJ(ds);
     const minStay = getMinStayJ(ds);
     const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
-    const minHtml = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
+    const nightWord = window.__calLang === 'en' ? 'nights' : 'nocí';
+    const minHtml = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} ${nightWord}</span>` : '';
     html += `<div class="${cls}" data-ds="${ds}"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
   }
   html += '</div>';
@@ -1229,7 +1233,7 @@ function handleHoverJ(ds) {
     if (warn && ds > selJ.start) {
       const nights = daysBetween(selJ.start, ds);
       const ms = calcMinStayJ(selJ.start, nights);
-      if (nights < ms) { warn.textContent = `⚠ Min ${ms} nocí — přidejte ${ms-nights} ${ms-nights===1?'noc':'noci'}`; warn.style.display = 'block'; }
+      if (nights < ms) { warn.textContent = window.__calLang==='en' ? `⚠ Min ${ms} nights — add ${ms-nights} more ${ms-nights===1?'night':'nights'}` : `⚠ Min ${ms} nocí — přidejte ${ms-nights} ${ms-nights===1?'noc':'noci'}`; warn.style.display = 'block'; }
       else { warn.style.display = 'none'; }
     }
   }
@@ -1246,14 +1250,16 @@ function updateSummaryJ() {
   if (!el) return;
   if (!selJ.start) { el.style.display='none'; return; }
   el.style.display = 'flex';
-  if (!selJ.end) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Vyberte datum odjezdu</div><button class="btn-clear" onclick="resetSelJ()">Zrušit výběr</button>`; return; }
+  if (!selJ.end) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">${window.__calLang==='en'?'Select departure date':'Vyberte datum odjezdu'}</div><button class="btn-clear" onclick="resetSelJ()">${window.__calLang==='en'?'Cancel':'Zrušit výběr'}</button>`; return; }
   const nights = daysBetween(selJ.start, selJ.end);
   const ms = calcMinStayJ(selJ.start, nights);
-  if (nights < ms) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">Min. pobyt: ${ms} nocí</div><button class="btn-clear" onclick="resetSelJ()">Zrušit výběr</button>`; return; }
+  if (nights < ms) { el.innerHTML = `<div style="flex:1;color:var(--color-text-muted)">${window.__calLang==='en'?`Min. stay: ${ms} nights`:`Min. pobyt: ${ms} nocí`}</div><button class="btn-clear" onclick="resetSelJ()">${window.__calLang==='en'?'Cancel':'Zrušit výběr'}</button>`; return; }
   let total = 0;
   for (let i = 0; i < nights; i++) total += (getPriceJ(addDays(selJ.start, i)) || 0);
-  const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total*0.3).toLocaleString('cs-CZ')} Kč</strong></div><div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total*0.7).toLocaleString('cs-CZ')} Kč</strong></div></div>`;
-  el.innerHTML = `<div style="flex:1"><div class="summary-info">Příjezd <strong>${fmtDate(selJ.start)}</strong> → Odjezd <strong>${fmtDate(selJ.end)}</strong> · <strong>${nights} nocí</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span><span class="summary-vat">vč. DPH</span></div>${deposit}</div><button class="btn-clear" onclick="resetSelJ()">Zrušit</button>`;
+  const isENJ = window.__calLang === 'en';
+  const fmtMJ = (v) => isENJ ? `${Math.round(v).toLocaleString('en-GB')} CZK` : `${Math.round(v).toLocaleString('cs-CZ')} Kč`;
+  const deposit = `<div class="summary-deposit"><div class="deposit-row"><span>${isENJ?'Deposit to reserve (30 %):':'Záloha k rezervaci (30 %):'}</span> <strong>${fmtMJ(total*0.3)}</strong></div><div class="deposit-row"><span>${isENJ?'Balance due (one week before arrival):':'Doplatek (týden před příjezdem):'}</span> <strong>${fmtMJ(total*0.7)}</strong></div></div>`;
+  el.innerHTML = `<div style="flex:1"><div class="summary-info">${isENJ?'Arrival':'Příjezd'} <strong>${fmtDate(selJ.start)}</strong> → ${isENJ?'Departure':'Odjezd'} <strong>${fmtDate(selJ.end)}</strong> · <strong>${nights} ${isENJ?'nights':'nocí'}</strong></div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span class="summary-total">${isENJ?total.toLocaleString('en-GB')+' CZK':total.toLocaleString('cs-CZ')+' Kč'}</span><span class="summary-vat">${isENJ?'incl. VAT':'vč. DPH'}</span></div>${deposit}</div><button class="btn-clear" onclick="resetSelJ()">${isENJ?'Cancel':'Zrušit'}</button>`;
   prefillFormJ();
 }
 
@@ -1308,7 +1314,7 @@ loadCalDataJ();
           });
           if (res.ok) {
             note.style.color = 'var(--color-primary)';
-            note.textContent = '✓ Zpráva odeslána. Ozvu se co nejdříve!';
+            note.textContent = window.__calLang === 'en' ? '✓ Message sent. I\'ll get back to you soon!' : '✓ Zpráva odeslána. Ozvu se co nejdříve!';
             form.reset();
           } else {
             throw new Error();
