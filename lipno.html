@@ -528,8 +528,8 @@
               <button class="gallery-tab" data-cat="exteriér" data-en="Exterior &amp; surroundings">Exteriér &amp; okolí</button>
               <button class="gallery-tab" data-cat="obyvak" data-en="Living room">Obývací pokoj</button>
               <button class="gallery-tab" data-cat="kuchyne" data-en="Kitchen &amp; dining">Kuchyně &amp; jídelna</button>
-              <button class="gallery-tab" data-cat="loznice">Ložnice</button>
-              <button class="gallery-tab" data-cat="koupelna">Koupelny</button>
+              <button class="gallery-tab" data-cat="loznice" data-en="Bedrooms">Ložnice</button>
+              <button class="gallery-tab" data-cat="koupelna" data-en="Bathrooms">Koupelny</button>
             </div>
 
             <!-- Mřížka -->
@@ -607,7 +607,7 @@
               <div class="cal-price-note" style="margin-left:auto; font-size:var(--text-sm); color:var(--color-text-muted);" data-en="prices in CZK / night, incl. VAT">ceny v Kč / noc, vč. DPH</div>
             </div>
           <div class="cal-warn" id="calWarn"></div>
-          <div class="cal-summary-bar" id="calSummary"><span class="summary-hint" data-en="Click the arrival date, then the departure date">Klikněte na den příjezdu a poté odjezdu</span></div>
+          <div class="cal-summary-bar" id="calSummary"><span class="summary-hint">Klikněte na den příjezdu a poté odjezdu</span></div>
 
             <!-- Kontaktní formulář -->
             <div class="contact-form-wrap">
@@ -637,7 +637,7 @@
                 </div>
                 <div class="form-group">
                   <label for="cf-message" data-en="Message">Zpráva</label>
-                  <textarea id="cf-message" name="zprava" rows="4" placeholder="Napište mi, co vás zajímá — počet hostů, termín, dotaz…"></textarea>
+                  <textarea id="cf-message" name="zprava" rows="4" placeholder="Napište mi, co vás zajímá — počet hostů, termín, dotaz…" data-en-placeholder="Tell me what you're interested in — number of guests, dates, any questions…"></textarea>
                 </div>
                 <div><button type="submit" class="btn btn-primary" data-en="Send message">Odeslat zprávu</button></div>
                 <p class="form-note" id="formNote"></p>
@@ -667,7 +667,6 @@
             <div class="detail-sidebar-rules">
               <span data-en-html="<strong>Check-in:</strong> from 15:00<br><strong>Check-out:</strong> by 10:30<br><strong>Children:</strong> not suitable for children under 2<br><strong>Parties:</strong> not permitted"><strong>Příjezd:</strong> od 15:00<br>
               <strong>Odjezd:</strong> do 10:30<br>
-              <strong>Děti:</strong> nevhodné pro děti do 2 let<br>
               <strong>Párty:</strong> nejsou povoleny</span>
             </div>
           </div>
@@ -868,7 +867,8 @@
         if (invalidRange) cls += ' invalid-range';
         if (ds === todayStr) cls += ' today';
         const priceHtml = (!past && !isOcc && price) ? `<span class="day-price">${Number(price).toLocaleString('cs-CZ')}</span>` : '';
-        const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} nocí</span>` : '';
+        const nightWord = window.__calLang === 'en' ? 'nights' : 'nocí';
+        const minHtml   = (!past && !isOcc) ? `<span class="day-min">Min<br>${minStay} ${nightWord}</span>` : '';
         html += `<div class="${cls}" data-ds="${ds}"><span class="day-num">${d}</span>${priceHtml}${minHtml}</div>`;
       }
       html += '</div>';
@@ -916,7 +916,9 @@
           const nights = daysBetween(sel.start, ds);
           const ms = calcMinStay(sel.start, nights);
           if (nights < ms) {
-            warn.textContent = `⚠ Minimální pobyt pro tento termín je ${ms} nocí — přidejte ještě ${ms - nights} ${ms - nights === 1 ? 'noc' : 'noci'}`;
+            warn.textContent = window.__calLang === 'en'
+            ? `⚠ Minimum stay for this period is ${ms} nights — please add ${ms - nights} more ${ms - nights === 1 ? 'night' : 'nights'}`
+            : `⚠ Minimální pobyt pro tento termín je ${ms} nocí — přidejte ještě ${ms - nights} ${ms - nights === 1 ? 'noc' : 'noci'}`;
             warn.style.display = 'block';
           } else { warn.style.display = 'none'; }
         }
@@ -953,14 +955,14 @@
       }
       if (!sel.end) {
         el.innerHTML = `<div class="summary-info">Příjezd: <strong>${fmtDate(sel.start)}</strong></div>
-          <div class="summary-hint">Nyní klikněte na den odjezdu</div>
-          <button class="btn-clear" onclick="resetSel()">Zrušit</button>`; return;
+          <div class="summary-hint">${window.__calLang==='en' ? 'Now click the departure date' : 'Nyní klikněte na den odjezdu'}</div>
+          <button class="btn-clear" onclick="resetSel()">${window.__calLang==='en' ? 'Cancel' : 'Zrušit'}</button>`; return;
       }
       const nights = daysBetween(sel.start, sel.end);
       const ms = calcMinStay(sel.start, nights);
       if (nights < ms) {
-        el.innerHTML = `<span style="color:#c0392b;font-size:14px">⚠ Minimální pobyt pro tento termín je ${ms} nocí. Vyberte delší termín.</span>
-          <button class="btn-clear" onclick="resetSel()">Zrušit výběr</button>`; return;
+        el.innerHTML = `<span style="color:#c0392b;font-size:14px">${window.__calLang==='en' ? `⚠ Minimum stay for this period is ${ms} nights. Please select a longer period.` : `⚠ Minimální pobyt pro tento termín je ${ms} nocí. Vyberte delší termín.`}</span>
+          <button class="btn-clear" onclick="resetSel()">${window.__calLang==='en' ? 'Cancel' : 'Zrušit výběr'}</button>`; return;
       }
       let total = 0;
       for (let i = 0; i < nights; i++) total += (getPrice(addDays(sel.start, i)) || 0);
@@ -969,17 +971,17 @@
           <div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total * 0.3).toLocaleString('cs-CZ')} Kč</strong></div>
           <div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total * 0.7).toLocaleString('cs-CZ')} Kč</strong></div>
         </div>`;
-      const feeNote = LOCAL_FEE > 0 ? `<div class="summary-fee">+ Místní poplatek z pobytu <strong>${LOCAL_FEE} Kč</strong>/noc za dospělého hosta (účtováno zvlášť)</div>` : '';
+      const feeNote = LOCAL_FEE > 0 ? `<div class="summary-fee">${window.__calLang==='en' ? `+ Local tourist tax <strong>${LOCAL_FEE} CZK</strong>/night per adult guest (charged separately)` : `+ Místní poplatek z pobytu <strong>${LOCAL_FEE} Kč</strong>/noc za dospělého hosta (účtováno zvlášť)`}</div>` : '';
       el.innerHTML = `
         <div style="flex:1">
-          <div class="summary-info">Příjezd <strong>${fmtDate(sel.start)}</strong> → Odjezd <strong>${fmtDate(sel.end)}</strong> · <strong>${nights} nocí</strong></div>
+          <div class="summary-info">${window.__calLang==='en' ? 'Arrival' : 'Příjezd'} <strong>${fmtDate(sel.start)}</strong> → ${window.__calLang==='en' ? 'Departure' : 'Odjezd'} <strong>${fmtDate(sel.end)}</strong> · <strong>${nights} ${window.__calLang==='en' ? 'nights' : 'nocí'}</strong></div>
           <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px">
             <span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span>
             <span class="summary-vat">vč. DPH</span>
           </div>
           ${feeNote}${deposit}
         </div>
-        <button class="btn-clear" onclick="resetSel()">Zrušit</button>`;
+        <button class="btn-clear" onclick="resetSel()">${window.__calLang==='en' ? 'Cancel' : 'Zrušit'}</button>`;
       prefillForm();
     }
 
@@ -1029,7 +1031,7 @@
             headers: { 'Accept': 'application/json' }
           });
           if (res.ok) {
-            note.textContent = 'Zpráva odeslána. Ozvu se co nejdříve.';
+            note.textContent = window.__calLang === 'en' ? 'Message sent. I\'ll get back to you soon.' : 'Zpráva odeslána. Ozvu se co nejdříve.';
             form.reset();
           } else {
             note.textContent = 'Něco se pokazilo. Zkuste to prosím znovu.';
