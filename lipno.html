@@ -837,7 +837,7 @@
     function renderMonth(containerId, year, month) {
       const container = document.getElementById(containerId);
       if (!container) return;
-      let html = `<div class="cal-month-header"><span class="cal-month-title">${MONTH_NAMES[month]} ${year}</span></div><div class="cal-grid">`;
+      let html = `<div class="cal-month-header"><span class="cal-month-title">${(window.__calLang==='en' ? MONTH_NAMES_EN : MONTH_NAMES)[month]} ${year}</span></div><div class="cal-grid">`;
       DOW.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
       let dow = new Date(year, month, 1).getDay();
       dow = dow === 0 ? 6 : dow - 1;
@@ -954,7 +954,7 @@
         el.innerHTML = `<span class="summary-hint">${window.__calLang==='en' ? 'Click the arrival date, then the departure date' : 'Klikněte na den příjezdu a poté odjezdu'}</span>`; return;
       }
       if (!sel.end) {
-        el.innerHTML = `<div class="summary-info">Příjezd: <strong>${fmtDate(sel.start)}</strong></div>
+        el.innerHTML = `<div class="summary-info">${window.__calLang==='en' ? 'Arrival:' : 'Příjezd:'} <strong>${fmtDate(sel.start)}</strong></div>
           <div class="summary-hint">${window.__calLang==='en' ? 'Now click the departure date' : 'Nyní klikněte na den odjezdu'}</div>
           <button class="btn-clear" onclick="resetSel()">${window.__calLang==='en' ? 'Cancel' : 'Zrušit'}</button>`; return;
       }
