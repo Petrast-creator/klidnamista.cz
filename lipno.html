@@ -607,7 +607,7 @@
               <div class="cal-price-note" style="margin-left:auto; font-size:var(--text-sm); color:var(--color-text-muted);" data-en="prices in CZK / night, incl. VAT">ceny v Kč / noc, vč. DPH</div>
             </div>
           <div class="cal-warn" id="calWarn"></div>
-          <div class="cal-summary-bar" id="calSummary"><span class="summary-hint">Klikněte na den příjezdu a poté odjezdu</span></div>
+          <div class="cal-summary-bar" id="calSummary"><span class="summary-hint">${window.__calLang==='en' ? 'Click the arrival date, then the departure date' : 'Klikněte na den příjezdu a poté odjezdu'}</span></div>
 
             <!-- Kontaktní formulář -->
             <div class="contact-form-wrap">
@@ -665,7 +665,7 @@
               <div class="detail-sidebar-meta-row"><span data-en-html="Bathrooms">Koupelny</span><span>2</span></div>
             </div>
             <div class="detail-sidebar-rules">
-              <span data-en-html="<strong>Check-in:</strong> from 15:00<br><strong>Check-out:</strong> by 10:30<br><strong>Children:</strong> not suitable for children under 2<br><strong>Parties:</strong> not permitted"><strong>Příjezd:</strong> od 15:00<br>
+              <span data-en-html="<strong>Check-in:</strong> from 15:00<br><strong>Check-out:</strong> by 10:30<br><strong>Parties:</strong> not permitted"><strong>Příjezd:</strong> od 15:00<br>
               <strong>Odjezd:</strong> do 10:30<br>
               <strong>Párty:</strong> nejsou povoleny</span>
             </div>
@@ -951,7 +951,7 @@
       const el = document.getElementById('calSummary');
       if (!el) return;
       if (!sel.start) {
-        el.innerHTML = '<span class="summary-hint">Klikněte na den příjezdu a poté odjezdu</span>'; return;
+        el.innerHTML = `<span class="summary-hint">${window.__calLang==='en' ? 'Click the arrival date, then the departure date' : 'Klikněte na den příjezdu a poté odjezdu'}</span>`; return;
       }
       if (!sel.end) {
         el.innerHTML = `<div class="summary-info">Příjezd: <strong>${fmtDate(sel.start)}</strong></div>
@@ -966,22 +966,24 @@
       }
       let total = 0;
       for (let i = 0; i < nights; i++) total += (getPrice(addDays(sel.start, i)) || 0);
+      const isEN = window.__calLang === 'en';
+      const fmtMoney = (v) => isEN ? `${Math.round(v).toLocaleString('en-GB')} CZK` : `${Math.round(v).toLocaleString('cs-CZ')} Kč`;
       const deposit = `
         <div class="summary-deposit">
-          <div class="deposit-row"><span>Záloha k rezervaci (30 %):</span> <strong>${Math.round(total * 0.3).toLocaleString('cs-CZ')} Kč</strong></div>
-          <div class="deposit-row"><span>Doplatek (týden před příjezdem):</span> <strong>${Math.round(total * 0.7).toLocaleString('cs-CZ')} Kč</strong></div>
+          <div class="deposit-row"><span>${isEN ? 'Deposit to reserve (30 %):' : 'Záloha k rezervaci (30 %):'}</span> <strong>${fmtMoney(total * 0.3)}</strong></div>
+          <div class="deposit-row"><span>${isEN ? 'Balance due (one week before arrival):' : 'Doplatek (týden před příjezdem):'}</span> <strong>${fmtMoney(total * 0.7)}</strong></div>
         </div>`;
       const feeNote = LOCAL_FEE > 0 ? `<div class="summary-fee">${window.__calLang==='en' ? `+ Local tourist tax <strong>${LOCAL_FEE} CZK</strong>/night per adult guest (charged separately)` : `+ Místní poplatek z pobytu <strong>${LOCAL_FEE} Kč</strong>/noc za dospělého hosta (účtováno zvlášť)`}</div>` : '';
       el.innerHTML = `
         <div style="flex:1">
-          <div class="summary-info">${window.__calLang==='en' ? 'Arrival' : 'Příjezd'} <strong>${fmtDate(sel.start)}</strong> → ${window.__calLang==='en' ? 'Departure' : 'Odjezd'} <strong>${fmtDate(sel.end)}</strong> · <strong>${nights} ${window.__calLang==='en' ? 'nights' : 'nocí'}</strong></div>
+          <div class="summary-info">${isEN ? 'Arrival' : 'Příjezd'} <strong>${fmtDate(sel.start)}</strong> → ${isEN ? 'Departure' : 'Odjezd'} <strong>${fmtDate(sel.end)}</strong> · <strong>${nights} ${isEN ? 'nights' : 'nocí'}</strong></div>
           <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px">
             <span class="summary-total">${total.toLocaleString('cs-CZ')} Kč</span>
             <span class="summary-vat">vč. DPH</span>
           </div>
           ${feeNote}${deposit}
         </div>
-        <button class="btn-clear" onclick="resetSel()">${window.__calLang==='en' ? 'Cancel' : 'Zrušit'}</button>`;
+        <button class="btn-clear" onclick="resetSel()">${isEN ? 'Cancel' : 'Zrušit'}</button>`;
       prefillForm();
     }
 
