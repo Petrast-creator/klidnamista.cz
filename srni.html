@@ -613,7 +613,7 @@
               allowfullscreen loading="lazy"
               title="Mapa – Srní 165"
             ></iframe>
-            <p class="map-link"><a href="https://mapy.cz/?x=13.5017&y=49.0258&z=16" target="_blank" rel="noopener">Otevřít v Mapy.cz &rarr;</a></p>
+            <p class="map-link"><a href="https://mapy.cz/?x=13.5017&y=49.0258&z=16" target="_blank" rel="noopener" data-en="Open in Mapy.cz →">Otevřít v Mapy.cz →</a></p>
           </div>
 
           <!-- Kalendář dostupnosti -->
@@ -626,12 +626,12 @@
               <button class="cal-arrow" id="calNextOuter" aria-label="Další měsíc">›</button>
             </div>
             <div class="cal-legend">
-              <div class="cal-legend-item"><div class="cal-legend-dot available"></div>Volný den</div>
-              <div class="cal-legend-item"><div class="cal-legend-dot occupied"></div>Obsazeno</div>
-              <div style="margin-left:auto; font-size:var(--text-sm); color:var(--color-text-muted);">ceny v Kč / noc, vč. DPH</div>
+              <div class="cal-legend-item"><div class="cal-legend-dot available"></div><span data-en="Available">Volný den</span></div>
+              <div class="cal-legend-item"><div class="cal-legend-dot occupied"></div><span data-en="Occupied">Obsazeno</span></div>
+              <div class="cal-price-note" style="margin-left:auto; font-size:var(--text-sm); color:var(--color-text-muted);" data-en="prices in CZK / night, incl. VAT">ceny v Kč / noc, vč. DPH</div>
             </div>
           <div class="cal-warn" id="calWarn"></div>
-          <div class="cal-summary-bar" id="calSummary"><span class="summary-hint">Klikněte na den příjezdu a poté odjezdu</span></div>
+          <div class="cal-summary-bar" id="calSummary"><span class="summary-hint" data-en="Click the arrival date, then the departure date">Klikněte na den příjezdu a poté odjezdu</span></div>
             <!-- Kontaktní formulář -->
             <div class="contact-form-wrap">
               <h2 class="detail-section-title" style="margin-top: var(--space-10);" data-en="Get in touch">Napište mi</h2>
@@ -668,7 +668,7 @@
 
               <div class="airbnb-alt">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v4l3 3"/></svg>
-                Preferujete rezervaci přes platformu?
+                <span data-en="Prefer booking through a platform?">Preferujete rezervaci přes platformu?</span>
                 <a href="https://www.airbnb.cz/h/apartmanulesa" target="_blank" rel="noopener" data-en="Book on Airbnb →">Rezervovat přes Airbnb &rarr;</a>
               </div>
             </div>
@@ -683,8 +683,8 @@
             <div class="detail-sidebar-meta">
               <div class="detail-sidebar-meta-row"><span data-en-html="Address">Adresa</span><span>Srní 165, 341 92</span></div>
               <div class="detail-sidebar-meta-row"><span data-en="Guests">Hosté</span><span data-en="up to 6">až 6</span></div>
-              <div class="detail-sidebar-meta-row"><span>Ložnice</span><span>2</span></div>
-              <div class="detail-sidebar-meta-row"><span data-en="Beds">Postele</span><span style="text-align:right">2× dvojlůžko<br>+ rozkládací pohovka</span></div>
+              <div class="detail-sidebar-meta-row"><span data-en="Bedrooms">Ložnice</span><span>2</span></div>
+              <div class="detail-sidebar-meta-row"><span data-en="Beds">Postele</span><span style="text-align:right" data-en-html="2&times; double bed<br>+ sofa bed">2× dvojlůžko<br>+ rozkládací pohovka</span></div>
               <div class="detail-sidebar-meta-row"><span data-en-html="Bathrooms">Koupelny</span><span>1,5</span></div>
             </div>
             <div class="detail-sidebar-rules">
@@ -715,7 +715,7 @@
       <div class="footer-inner">
         <div class="footer-brand">
           <svg width="28" height="28" viewBox="0 0 36 36" fill="none"><path d="M18 4L4 14v18h10v-9h8v9h10V14L18 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><circle cx="18" cy="10" r="2.5" fill="currentColor"/></svg>
-          <span>Naše klidná místa</span>
+          <span data-en="Our Peaceful Places">Naše klidná místa</span>
         </div>
         <div class="footer-links">
           <a href="lipno.html">Lipno</a>
@@ -1112,6 +1112,7 @@
     const DAY_NAMES_CS   = ['PO','ÚT','ST','ČT','PÁ','SO','NE'];
 
     window.setCalendarLang = function(lang) {
+      window.__calLang = lang;
       const isEN = lang === 'en';
       // Měsíce v navigaci
       document.querySelectorAll('.cal-month-title').forEach(el => {
@@ -1129,13 +1130,7 @@
         el.textContent = isEN ? DAY_NAMES_EN[i % 7] : DAY_NAMES_CS[i % 7];
       });
       // Legenda
-      document.querySelectorAll('.cal-legend-item').forEach(el => {
-        const span = el.querySelector('span:last-child') || el.querySelector('span');
-        if (!span) return;
-        const t = span.textContent.trim();
-        if (t === 'Volný den' || t === 'Available') span.textContent = isEN ? 'Available' : 'Volný den';
-        if (t === 'Obsazeno' || t === 'Occupied') span.textContent = isEN ? 'Occupied' : 'Obsazeno';
-      });
+      // legenda řešena přes data-en na span
       // Hint text
       document.querySelectorAll('.cal-hint').forEach(el => {
         if (isEN) {
@@ -1155,6 +1150,17 @@
         } else {
           if (el.dataset.cs) el.textContent = el.dataset.cs;
         }
+      });
+      // Re-apply data-en translations (legend span, price note, summary hint)
+      document.querySelectorAll('[data-en]').forEach(function(el) {
+        var csVal = el.getAttribute('data-cs');
+        if (isEN) el.textContent = el.getAttribute('data-en');
+        else if (csVal && csVal.trim()) el.textContent = csVal;
+      });
+      document.querySelectorAll('[data-en-html]').forEach(function(el) {
+        var csHtml = el.getAttribute('data-cs-html');
+        if (isEN) el.innerHTML = el.getAttribute('data-en-html');
+        else if (csHtml && csHtml.trim()) el.innerHTML = csHtml;
       });
       // ceny v Kč text
       document.querySelectorAll('.cal-price-note').forEach(el => {
