@@ -1,32 +1,32 @@
 /* =============================================
    PETRA'S PLACES — Style
-   Palette: olive, wheat, earthy warmth
-   Fonts: Fraunces (display) + Plus Jakarta Sans (body)
+   Palette: forest greens, warm cream, earthy wood
+   Fonts: Zodiak (display) + Satoshi (body)
    ============================================= */
 
 :root,
 [data-theme='light'] {
-  --color-bg: #efe9df;
-  --color-surface: #f7f2ea;
+  --color-bg: #f5f2ed;
+  --color-surface: #faf8f4;
   --color-surface-2: #ffffff;
-  --color-surface-offset: #e6dfd3;
-  --color-border: #cfc7b8;
-  --color-divider: #d8d0c2;
+  --color-surface-offset: #ede9e1;
+  --color-border: #d6d0c4;
+  --color-divider: #ddd8cf;
 
-  --color-text: #272010;
-  --color-text-muted: #7a7060;
-  --color-text-faint: #b0a898;
-  --color-text-inverse: #f7f2ea;
+  --color-text: #2a2417;
+  --color-text-muted: #7a7162;
+  --color-text-faint: #b5ae9f;
+  --color-text-inverse: #faf8f4;
 
-  /* Olive as primary */
-  --color-primary: #5c6b2e;
-  --color-primary-hover: #445020;
-  --color-primary-active: #303a16;
-  --color-primary-highlight: #dae3c0;
+  /* Forest green as primary */
+  --color-primary: #2d6a4f;
+  --color-primary-hover: #1b4d38;
+  --color-primary-active: #12382a;
+  --color-primary-highlight: #c8ddd4;
 
-  /* Golden amber accent */
-  --color-accent: #8a6534;
-  --color-accent-hover: #6e4e25;
+  /* Earthy warm accent */
+  --color-accent: #8b5e3c;
+  --color-accent-hover: #6e4a2e;
 
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -45,8 +45,8 @@
   --content-default: 960px;
   --content-wide: 1200px;
 
-  --font-display: 'Fraunces', 'Georgia', serif;
-  --font-body: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-display: 'Zodiak', 'Georgia', serif;
+  --font-body: 'Satoshi', 'Inter', sans-serif;
 
   --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
   --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
@@ -71,22 +71,22 @@
 }
 
 [data-theme='dark'] {
-  --color-bg: #16140e;
-  --color-surface: #1d1a12;
-  --color-surface-2: #221f16;
-  --color-surface-offset: #191710;
-  --color-border: #302c1e;
-  --color-divider: #28251a;
-  --color-text: #e6dfd0;
-  --color-text-muted: #8a8270;
+  --color-bg: #17150f;
+  --color-surface: #1e1b14;
+  --color-surface-2: #232018;
+  --color-surface-offset: #1a1810;
+  --color-border: #33301f;
+  --color-divider: #2a2718;
+  --color-text: #e8e3d8;
+  --color-text-muted: #8a8370;
   --color-text-faint: #5a5445;
-  --color-text-inverse: #16140e;
-  --color-primary: #9cae5a;
-  --color-primary-hover: #7d9040;
-  --color-primary-active: #607030;
-  --color-primary-highlight: #252e10;
-  --color-accent: #c49050;
-  --color-accent-hover: #a87038;
+  --color-text-inverse: #17150f;
+  --color-primary: #52a882;
+  --color-primary-hover: #3a8e68;
+  --color-primary-active: #2a6e50;
+  --color-primary-highlight: #1e3028;
+  --color-accent: #c4855a;
+  --color-accent-hover: #a36843;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.25);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
   --shadow-lg: 0 12px 40px rgba(0,0,0,0.45);
@@ -94,22 +94,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --color-bg: #16140e;
-    --color-surface: #1d1a12;
-    --color-surface-2: #221f16;
-    --color-surface-offset: #191710;
-    --color-border: #302c1e;
-    --color-divider: #28251a;
-    --color-text: #e6dfd0;
-    --color-text-muted: #8a8270;
+    --color-bg: #17150f;
+    --color-surface: #1e1b14;
+    --color-surface-2: #232018;
+    --color-surface-offset: #1a1810;
+    --color-border: #33301f;
+    --color-divider: #2a2718;
+    --color-text: #e8e3d8;
+    --color-text-muted: #8a8370;
     --color-text-faint: #5a5445;
-    --color-text-inverse: #16140e;
-    --color-primary: #9cae5a;
-    --color-primary-hover: #7d9040;
-    --color-primary-active: #607030;
-    --color-primary-highlight: #252e10;
-    --color-accent: #c49050;
-    --color-accent-hover: #a87038;
+    --color-text-inverse: #17150f;
+    --color-primary: #52a882;
+    --color-primary-hover: #3a8e68;
+    --color-primary-active: #2a6e50;
+    --color-primary-highlight: #1e3028;
+    --color-accent: #c4855a;
+    --color-accent-hover: #a36843;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.25);
     --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
     --shadow-lg: 0 12px 40px rgba(0,0,0,0.45);
@@ -299,10 +299,10 @@ button { cursor: pointer; background: none; border: none; font: inherit; color: 
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(160deg,
-    rgba(15,12,4,0.08) 0%,
-    rgba(30,22,8,0.42) 45%,
-    rgba(22,18,5,0.72) 100%);
+  background: linear-gradient(to bottom,
+    rgba(20,16,8,0.15) 0%,
+    rgba(20,16,8,0.45) 50%,
+    rgba(20,16,8,0.70) 100%);
 }
 .hero-content {
   position: relative;
@@ -351,8 +351,7 @@ button { cursor: pointer; background: none; border: none; font: inherit; color: 
 
 /* ---- INTRO STRIP ---- */
 .intro-strip {
-  background: color-mix(in oklab, var(--color-primary) 8%, var(--color-surface));
-  border-top: 3px solid var(--color-primary);
+  background: var(--color-surface);
   border-bottom: 1px solid var(--color-divider);
   padding-block: var(--space-8);
 }
